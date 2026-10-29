@@ -9,6 +9,7 @@ import importlib.metadata
 import itertools
 import json
 import re
+from collections.abc import Sequence  # ruff: ignore[typing-only-standard-library-import] # autodoc resolves the annotations
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from types import MappingProxyType
@@ -42,11 +43,37 @@ class Setting:
     value: Any
     description: str
     anchor_suffix: str = field(default="", repr=False)
-    """Distinguishes `.anchor` from that of the same setting elsewhere on the page."""
+    """Distinguishes `.anchor` from that of the same key elsewhere on the page."""
+
+    @property
+    def path(self) -> tuple[str, ...]:
+        return (*self.table, self.name)
 
     @property
     def anchor(self) -> str:
-        return nodes.make_id(".".join((*self.table, self.name)) + self.anchor_suffix)
+        return nodes.make_id(".".join(self.path) + self.anchor_suffix)
+
+
+@dataclass(frozen=True)
+class Table:
+    """A nested table in the generated example, which holds settings of its own."""
+
+    table: tuple[str, ...]
+    name: str
+    description: str
+    anchor_suffix: str = field(default="", repr=False)
+
+    @property
+    def path(self) -> tuple[str, ...]:
+        return (*self.table, self.name)
+
+    @property
+    def anchor(self) -> str:
+        return nodes.make_id(".".join(self.path) + self.anchor_suffix)
+
+
+Entry = Setting | Table
+"""A key in the generated example."""
 
 
 class ConfigSchemaDirective(SphinxDirective):
@@ -82,7 +109,7 @@ class ConfigSchemaDirective(SphinxDirective):
         except ValueError as exc:
             raise self.error(str(exc)) from exc
         tips: dict[str, str] = _get_tips(self.env).setdefault(self.env.docname, {})
-        settings = [_make_unique(s, fmt, tips) for s in settings]
+        settings = [_make_unique(s, fmt, tips) for s in _drop_empty_tables(settings)]
         tips.update({f"#{s.anchor}": to_tooltip(s.description) for s in settings})
         example: nodes.Node = create_literal_block(settings, fmt, rawsource=self.name)
         self.set_source_info(example)
@@ -92,7 +119,18 @@ class ConfigSchemaDirective(SphinxDirective):
         return [example]
 
 
-def _make_unique(setting: Setting, fmt: str, tips: dict[str, str]) -> Setting:
+def _drop_empty_tables(entries: list[Entry]) -> list[Entry]:
+    """Remove the tables that do not appear in the example, as no setting is in them."""
+    used = {
+        s.table[:i]
+        for s in entries
+        if isinstance(s, Setting)
+        for i in range(len(s.table) + 1)
+    }
+    return [e for e in entries if isinstance(e, Setting) or e.path in used]
+
+
+def _make_unique(setting: Entry, fmt: str, tips: dict[str, str]) -> Entry:
     """Suffix the anchor of a setting if an earlier example on the page already uses it.
 
     This happens when the same schema is shown in several formats, for instance in tabs.
@@ -110,11 +148,12 @@ def _make_unique(setting: Setting, fmt: str, tips: dict[str, str]) -> Setting:
 
 def iter_settings(
     schema: dict[str, Any], table: tuple[str, ...] = (), *, strict: bool = False
-) -> Iterator[Setting]:
+) -> Iterator[Entry]:
     """Collect the settings with a default or example value from a JSON schema.
 
     Settings without a usable value are skipped, or reported with a `ValueError` after
-    all other settings have been collected if ``strict`` is set.
+    all other settings have been collected if ``strict`` is set. Nested tables are
+    yielded as a `Table`, so that their key can carry a description as well.
 
     >>> schema = {
     ...     "properties": {
@@ -134,7 +173,12 @@ def iter_settings(
         table, schema.get("properties", {}), schema
     ):
         for name, field_schema in properties.items():
-            if _is_table(_resolve_ref(field_schema, schema)):
+            resolved = _resolve_ref(field_schema, schema)
+            if _is_table(resolved):
+                description = field_schema.get("description") or resolved.get(
+                    "description", ""
+                )
+                yield Table(sub_table, name, description)
                 continue
             value = _example_value(field_schema)
             if value is None:
@@ -204,11 +248,11 @@ def _resolve_ref(
 FORMATS = ("toml", "yaml", "json")
 """Formats in which the example can be rendered."""
 
-Fragment = tuple[str, "Setting | None"]
-"""A piece of the example text, with its `Setting` if the piece is a key."""
+Fragment = tuple[str, "Entry | None"]
+"""A piece of the example text, with its `Entry` if the piece is a key."""
 
 
-def render(settings: list[Setting], fmt: str = "toml") -> str:
+def render(settings: Sequence[Entry], fmt: str = "toml") -> str:
     """Render the example as plain text.
 
     >>> settings = [Setting(("tool", "demo"), "transport", "auto", "")]
@@ -223,14 +267,16 @@ def render(settings: list[Setting], fmt: str = "toml") -> str:
     return "".join(text for text, _ in iter_fragments(settings, fmt))
 
 
-def iter_fragments(settings: list[Setting], fmt: str) -> Iterator[Fragment]:
+def iter_fragments(settings: Sequence[Entry], fmt: str) -> Iterator[Fragment]:
     """Split the example text into its keys and the text in between."""
+    leaves = [s for s in settings if isinstance(s, Setting)]
+    tables = {s.path: s for s in settings if isinstance(s, Table)}
     if fmt == "toml":
-        fragments = list(_iter_toml(settings))
+        fragments = list(_iter_toml(leaves, tables))
     elif fmt == "yaml":
-        fragments = list(_iter_yaml(_build_tree(settings), indent=""))
+        fragments = list(_iter_yaml(_build_tree(leaves), tables, (), indent=""))
     elif fmt == "json":
-        fragments = list(_iter_json(_build_tree(settings), indent=""))
+        fragments = list(_iter_json(_build_tree(leaves), tables, (), indent=""))
     else:
         msg = f"Unknown format {fmt!r}, choose from {', '.join(FORMATS)}"
         raise ValueError(msg)
@@ -254,32 +300,48 @@ def _build_tree(settings: list[Setting]) -> _Tree:
     return tree
 
 
-def _iter_toml(settings: list[Setting]) -> Iterator[Fragment]:
+def _iter_toml(
+    settings: list[Setting], tables: dict[tuple[str, ...], Table]
+) -> Iterator[Fragment]:
     table: tuple[str, ...] = ()
     first = True
     for setting in settings:
         if setting.table != table:
             if not first:
                 yield "\n", None
-            yield f"[{'.'.join(map(_to_toml_key, setting.table))}]\n", None
+            *parents, name = map(_to_toml_key, setting.table)
+            yield "[" + "".join(f"{p}." for p in parents), None
+            yield name, tables.get(setting.table)
+            yield "]\n", None
             table = setting.table
         first = False
         yield _to_toml_key(setting.name), setting
         yield f" = {to_toml_value(setting.value)}\n", None
 
 
-def _iter_yaml(tree: _Tree, indent: str) -> Iterator[Fragment]:
+def _iter_yaml(
+    tree: _Tree,
+    tables: dict[tuple[str, ...], Table],
+    path: tuple[str, ...],
+    indent: str,
+) -> Iterator[Fragment]:
     for key, child in tree.items():
         yield indent, None
         if isinstance(child, Setting):
             yield _to_yaml_key(key), child
             yield f": {to_yaml_value(child.value)}\n", None
         else:
-            yield f"{_to_yaml_key(key)}:\n", None
-            yield from _iter_yaml(child, indent + "  ")
+            yield _to_yaml_key(key), tables.get((*path, key))
+            yield ":\n", None
+            yield from _iter_yaml(child, tables, (*path, key), indent + "  ")
 
 
-def _iter_json(tree: _Tree, indent: str) -> Iterator[Fragment]:
+def _iter_json(
+    tree: _Tree,
+    tables: dict[tuple[str, ...], Table],
+    path: tuple[str, ...],
+    indent: str,
+) -> Iterator[Fragment]:
     if not tree:
         yield "{}", None
         return
@@ -290,8 +352,9 @@ def _iter_json(tree: _Tree, indent: str) -> Iterator[Fragment]:
             yield _to_json(key), child
             yield f": {_to_json(child.value)}", None
         else:
-            yield f"{_to_json(key)}: ", None
-            yield from _iter_json(child, indent + "  ")
+            yield _to_json(key), tables.get((*path, key))
+            yield ": ", None
+            yield from _iter_json(child, tables, (*path, key), indent + "  ")
         yield ",\n" if i < len(tree) - 1 else "\n", None
     yield indent + "}", None
 
@@ -394,7 +457,7 @@ def _to_yaml_key(text: str) -> str:
 
 
 def create_literal_block(
-    settings: list[Setting], fmt: str, rawsource: str
+    settings: Sequence[Entry], fmt: str, rawsource: str
 ) -> nodes.Element:
     """Build the example as a code block in which each key is an anchor.
 

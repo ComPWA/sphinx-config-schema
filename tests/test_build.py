@@ -16,6 +16,7 @@ SCHEMA = {
         "missing": {"description": "No value."},
         "server": {
             "type": "object",
+            "description": "Server settings.",
             "properties": {"port": {"description": "Port.", "default": 8080}},
         },
     }
@@ -79,7 +80,11 @@ def test_formats(tmp_path: Path, fmt: str, expected: str):
     assert code is not None
     assert code.get_text() == expected
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
-    assert set(keys) == {"tool-example-output", "tool-example-server-port"}
+    assert set(keys) == {
+        "tool-example-output",
+        "tool-example-server",
+        "tool-example-server-port",
+    }
 
 
 def test_keys_are_anchors(html_dir: Path):
@@ -87,6 +92,7 @@ def test_keys_are_anchors(html_dir: Path):
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
     assert keys == {
         "tool-example-output": "output",
+        "tool-example-server": "server",
         "tool-example-server-port": "port",
     }
     code = soup.select_one(".highlight-toml pre")
@@ -101,6 +107,7 @@ def test_tooltips(html_dir: Path):
     tips = tips_file.read_text()
     assert '"a[href=\\"#tool-example-output\\"]"' in tips
     assert "Output <code>directory</code>." in tips
+    assert "Server settings." in tips
     assert (html_dir / "_static" / "config-schema.css").is_file()
 
 

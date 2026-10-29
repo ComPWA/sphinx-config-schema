@@ -20,6 +20,7 @@
       "default": []
     },
     "server": {
+      "description": "Settings of the server that hosts the output.",
       "type": "object",
       "properties": {
         "host": {
