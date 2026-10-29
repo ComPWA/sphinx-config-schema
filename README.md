@@ -3,7 +3,6 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PyPI package](https://badge.fury.io/py/sphinx-config-schema.svg)](https://pypi.org/project/sphinx-config-schema)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
-
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ComPWA/sphinx-config-schema/main.svg)](https://results.pre-commit.ci/latest/github/ComPWA/sphinx-config-schema/main)
 [![CI status](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml?query=branch%3Amain)
 [![Spelling checked](https://img.shields.io/badge/cspell-checked-brightgreen.svg)](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
@@ -26,7 +25,16 @@ extensions = [
 ]
 ```
 
-and render a schema in a MyST page:
+and render a schema in a reStructuredText page:
+
+```rst
+.. config-schema:: example.schema.json
+    :caption: pyproject.toml
+    :table: tool.example
+    :format: toml
+```
+
+or in a MyST Markdown page:
 
 ````md
 ```{config-schema} example.schema.json
