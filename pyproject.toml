@@ -1,6 +1,6 @@
 [project]
 name = "sphinx-toml-schema"
-description = "Render a JSON schema as a copyable TOML example with tooltips in Sphinx"
+description = "Render a JSON schema as a copyable TOML, YAML, or JSON example with tooltips in Sphinx"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -9,6 +9,7 @@ keywords = [
     "json-schema",
     "sphinx",
     "toml",
+    "yaml",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -53,6 +54,7 @@ doc = [
     "pydata-sphinx-theme",
     "sphinx-api-relink",
     "sphinx-copybutton",
+    "sphinx-design",
 ]
 style = [
     "ty",
@@ -63,6 +65,7 @@ test = [
     "pytest",
     "pytest-cov",
     "pytest-xdist",
+    "pyyaml",
 ]
 types = [
     { include-group = "doc" },

@@ -53,6 +53,35 @@ def test_strict(tmp_path: Path):
     assert "Settings without a default or example: missing" in app.warning.getvalue()
 
 
+@pytest.mark.parametrize(
+    ("fmt", "expected"),
+    [
+        ("yaml", "tool:\n  example:\n    output: build\n    server:\n      port: 8080"),
+        (
+            "json",
+            (
+                '{\n  "tool": {\n    "example": {\n      "output": "build",\n'
+                '      "server": {\n        "port": 8080\n      }\n    }\n  }\n}'
+            ),
+        ),
+    ],
+)
+def test_formats(tmp_path: Path, fmt: str, expected: str):
+    app = _build(
+        tmp_path,
+        ".. toml-schema:: example.schema.json\n"
+        "   :table: tool.example\n"
+        f"   :format: {fmt}\n",
+    )
+    assert not app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    code = soup.select_one(f".highlight-{fmt} pre")
+    assert code is not None
+    assert code.get_text() == expected
+    keys = {a["id"]: a.get_text() for a in soup.select("a.toml-schema-key")}
+    assert set(keys) == {"tool-example-output", "tool-example-server-port"}
+
+
 def test_keys_are_anchors(html_dir: Path):
     soup = BeautifulSoup((html_dir / "index.html").read_text(), "html.parser")
     keys = {a["id"]: a.get_text() for a in soup.select("a.toml-schema-key")}
@@ -94,3 +123,14 @@ def test_other_builders(tmp_path: Path, builder: str, output: str, expected: str
     )
     assert not app.warning.getvalue()
     assert expected in (app.outdir / output).read_text()
+
+
+def test_duplicate_anchors_get_suffix(tmp_path: Path):
+    directive = ".. toml-schema:: example.schema.json\n   :format: {}\n\n"
+    app = _build(
+        tmp_path, "".join(directive.format(f) for f in ("yaml", "yaml", "json"))
+    )
+    assert not app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    ids = [a["id"] for a in soup.select("a.toml-schema-key") if "output" in a["id"]]
+    assert ids == ["output", "output-yaml", "output-json"]

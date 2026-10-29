@@ -1,4 +1,4 @@
-"""Render a JSON schema as a copyable TOML example with tooltips in Sphinx."""
+"""Render a JSON schema as a copyable TOML, YAML, or JSON example in Sphinx."""
 
 # cspell:ignore astext docname docnames doctree ensurenl refid relfn stripnl templatename
 
@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import html
 import importlib.metadata
+import itertools
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -34,21 +35,22 @@ STATIC_DIR = Path(__file__).parent / "_static"
 
 @dataclass(frozen=True)
 class Setting:
-    """One key-value pair in the generated TOML example."""
+    """One key-value pair in the generated example."""
 
-    table: str
+    table: tuple[str, ...]
     name: str
     value: Any
     description: str
+    anchor_suffix: str = field(default="", repr=False)
+    """Distinguishes `.anchor` from that of the same setting elsewhere on the page."""
 
     @property
     def anchor(self) -> str:
-        path = f"{self.table}.{self.name}" if self.table else self.name
-        return nodes.make_id(path)
+        return nodes.make_id(".".join((*self.table, self.name)) + self.anchor_suffix)
 
 
 class TomlSchemaDirective(SphinxDirective):
-    """Render a copyable TOML example from a JSON schema.
+    """Render a copyable TOML, YAML, or JSON example from a JSON schema.
 
     Each key in the example is an anchor that sphinx-tippy turns into a tooltip with the
     description of that setting.
@@ -58,6 +60,7 @@ class TomlSchemaDirective(SphinxDirective):
     required_arguments = 1
     option_spec = MappingProxyType({
         "caption": directives.unchanged_required,
+        "format": lambda arg: directives.choice(arg, FORMATS),
         "strict": directives.flag,
         "table": directives.unchanged_required,
     })
@@ -67,15 +70,21 @@ class TomlSchemaDirective(SphinxDirective):
         rel_path, abs_path = self.env.relfn2path(self.arguments[0])
         self.env.note_dependency(rel_path)
         schema = json.loads(Path(abs_path).read_text())
-        table = self.options.get("table", "")
+        table = (
+            tuple(self.options.get("table", "").split("."))
+            if "table" in self.options
+            else ()
+        )
+        fmt = self.options.get("format", "toml")
         strict = "strict" in self.options
         try:
             settings = list(iter_settings(schema, table=table, strict=strict))
         except ValueError as exc:
             raise self.error(str(exc)) from exc
         tips: dict[str, str] = _get_tips(self.env).setdefault(self.env.docname, {})
+        settings = [_make_unique(s, fmt, tips) for s in settings]
         tips.update({f"#{s.anchor}": to_tooltip(s.description) for s in settings})
-        example: nodes.Node = create_literal_block(settings, rawsource=self.name)
+        example: nodes.Node = create_literal_block(settings, fmt, rawsource=self.name)
         self.set_source_info(example)
         caption = self.options.get("caption")
         if caption is not None:
@@ -83,8 +92,24 @@ class TomlSchemaDirective(SphinxDirective):
         return [example]
 
 
+def _make_unique(setting: Setting, fmt: str, tips: dict[str, str]) -> Setting:
+    """Suffix the anchor of a setting if an earlier example on the page already uses it.
+
+    This happens when the same schema is shown in several formats, for instance in tabs.
+
+    >>> tips = {"#port": "", "#port-yaml": ""}
+    >>> _make_unique(Setting((), "port", 80, ""), "yaml", tips).anchor
+    'port-yaml-2'
+    """
+    suffixes = itertools.chain(
+        ("", f".{fmt}"), (f".{fmt}.{i}" for i in itertools.count(2))
+    )
+    candidates = (replace(setting, anchor_suffix=s) for s in suffixes)
+    return next(c for c in candidates if f"#{c.anchor}" not in tips)
+
+
 def iter_settings(
-    schema: dict[str, Any], table: str = "", *, strict: bool = False
+    schema: dict[str, Any], table: tuple[str, ...] = (), *, strict: bool = False
 ) -> Iterator[Setting]:
     """Collect the settings with a default or example value from a JSON schema.
 
@@ -97,8 +122,8 @@ def iter_settings(
     ...         "optional": {"type": "string"},
     ...     }
     ... }
-    >>> list(iter_settings(schema, table="tool.demo"))
-    [Setting(table='tool.demo', name='name', value='demo', description='Project name.')]
+    >>> list(iter_settings(schema, table=("tool", "demo")))
+    [Setting(table=('tool', 'demo'), name='name', value='demo', description='Project name.')]
     >>> list(iter_settings(schema, strict=True))
     Traceback (most recent call last):
         ...
@@ -113,7 +138,7 @@ def iter_settings(
                 continue
             value = _example_value(field_schema)
             if value is None:
-                missing.append(f"{sub_table}.{name}" if sub_table else name)
+                missing.append(".".join((*sub_table, name)))
                 continue
             description = field_schema.get("description", "")
             yield Setting(sub_table, name, value, description)
@@ -143,14 +168,13 @@ def _example_value(field_schema: dict[str, Any]) -> Any:
 
 
 def _iter_tables(
-    table: str, properties: dict[str, Any], schema: dict[str, Any]
-) -> Iterator[tuple[str, dict[str, Any]]]:
+    table: tuple[str, ...], properties: dict[str, Any], schema: dict[str, Any]
+) -> Iterator[tuple[tuple[str, ...], dict[str, Any]]]:
     yield table, properties
     for name, field_schema in properties.items():
         resolved = _resolve_ref(field_schema, schema)
         if _is_table(resolved):
-            sub_table = f"{table}.{_to_toml_key(name)}" if table else _to_toml_key(name)
-            yield from _iter_tables(sub_table, resolved["properties"], schema)
+            yield from _iter_tables((*table, name), resolved["properties"], schema)
 
 
 def _is_table(field_schema: dict[str, Any]) -> bool:
@@ -177,31 +201,99 @@ def _resolve_ref(
     return resolved
 
 
-def render_toml(settings: list[Setting]) -> str:
-    """Render the TOML example as plain text.
+FORMATS = ("toml", "yaml", "json")
+"""Formats in which the example can be rendered."""
 
-    >>> print(render_toml([Setting("tool.demo", "transport", "auto", "")]))
+Fragment = tuple[str, "Setting | None"]
+"""A piece of the example text, with its `Setting` if the piece is a key."""
+
+
+def render(settings: list[Setting], fmt: str = "toml") -> str:
+    """Render the example as plain text.
+
+    >>> settings = [Setting(("tool", "demo"), "transport", "auto", "")]
+    >>> print(render(settings))
     [tool.demo]
     transport = "auto"
+    >>> print(render(settings, "yaml"))
+    tool:
+      demo:
+        transport: auto
     """
-    return "".join(text for text, _ in _iter_lines(settings)).rstrip("\n")
+    return "".join(text for text, _ in iter_fragments(settings, fmt))
 
 
-def _iter_lines(settings: list[Setting]) -> Iterator[tuple[str, Setting | None]]:
-    """Yield the lines of the TOML example with the setting that each line defines."""
-    table = ""
+def iter_fragments(settings: list[Setting], fmt: str) -> Iterator[Fragment]:
+    """Split the example text into its keys and the text in between."""
+    if fmt == "toml":
+        fragments = list(_iter_toml(settings))
+    elif fmt == "yaml":
+        fragments = list(_iter_yaml(_build_tree(settings), indent=""))
+    elif fmt == "json":
+        fragments = list(_iter_json(_build_tree(settings), indent=""))
+    else:
+        msg = f"Unknown format {fmt!r}, choose from {', '.join(FORMATS)}"
+        raise ValueError(msg)
+    if fragments:
+        text, setting = fragments.pop()
+        fragments.append((text.rstrip("\n"), setting))
+    yield from fragments
+
+
+_Tree = dict[str, "Setting | _Tree"]
+
+
+def _build_tree(settings: list[Setting]) -> _Tree:
+    """Nest the settings by their table, keeping the order in which they appear."""
+    tree: _Tree = {}
+    for setting in settings:
+        node = tree
+        for part in setting.table:
+            node = cast("_Tree", node.setdefault(part, {}))
+        node[setting.name] = setting
+    return tree
+
+
+def _iter_toml(settings: list[Setting]) -> Iterator[Fragment]:
+    table: tuple[str, ...] = ()
     first = True
     for setting in settings:
         if setting.table != table:
             if not first:
                 yield "\n", None
-            yield f"[{setting.table}]\n", None
+            yield f"[{'.'.join(map(_to_toml_key, setting.table))}]\n", None
             table = setting.table
         first = False
-        yield (
-            f"{_to_toml_key(setting.name)} = {to_toml_value(setting.value)}\n",
-            setting,
-        )
+        yield _to_toml_key(setting.name), setting
+        yield f" = {to_toml_value(setting.value)}\n", None
+
+
+def _iter_yaml(tree: _Tree, indent: str) -> Iterator[Fragment]:
+    for key, child in tree.items():
+        yield indent, None
+        if isinstance(child, Setting):
+            yield _to_yaml_key(key), child
+            yield f": {to_yaml_value(child.value)}\n", None
+        else:
+            yield f"{_to_yaml_key(key)}:\n", None
+            yield from _iter_yaml(child, indent + "  ")
+
+
+def _iter_json(tree: _Tree, indent: str) -> Iterator[Fragment]:
+    if not tree:
+        yield "{}", None
+        return
+    yield "{\n", None
+    for i, (key, child) in enumerate(tree.items()):
+        yield indent + "  ", None
+        if isinstance(child, Setting):
+            yield _to_json(key), child
+            yield f": {_to_json(child.value)}", None
+        else:
+            yield f"{_to_json(key)}: ", None
+            yield from _iter_json(child, indent + "  ")
+        yield ",\n" if i < len(tree) - 1 else "\n", None
+    yield indent + "}", None
 
 
 def to_toml_value(value: Any) -> str:
@@ -215,7 +307,7 @@ def to_toml_value(value: Any) -> str:
     if isinstance(value, int | float):
         return repr(value)
     if isinstance(value, str):
-        return json.dumps(value, ensure_ascii=False)
+        return _to_json(value)
     if isinstance(value, list):
         return "[" + ", ".join(to_toml_value(v) for v in value) + "]"
     if isinstance(value, dict):
@@ -229,6 +321,39 @@ def to_toml_value(value: Any) -> str:
     raise TypeError(msg)
 
 
+def to_yaml_value(value: Any) -> str:
+    """Render a JSON value as a YAML flow value.
+
+    >>> to_yaml_value({"name": "demo", "paths": ["a", "b"], "strict": True, "v": "1.0"})
+    '{name: demo, paths: [a, b], strict: true, v: "1.0"}'
+    """
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int | float):
+        return repr(value)
+    if isinstance(value, str):
+        return _to_yaml_key(value)
+    if isinstance(value, list):
+        return "[" + ", ".join(to_yaml_value(v) for v in value) + "]"
+    if isinstance(value, dict):
+        items = ", ".join(
+            f"{_to_yaml_key(k)}: {to_yaml_value(v)}" for k, v in value.items()
+        )
+        return f"{{{items}}}"
+    msg = f"Cannot render {value!r} as a YAML value"
+    raise TypeError(msg)
+
+
+def _to_json(value: Any) -> str:
+    try:
+        return json.dumps(value, ensure_ascii=False)
+    except TypeError as exc:
+        msg = f"Cannot render {value!r} as a JSON value"
+        raise TypeError(msg) from exc
+
+
 _BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
@@ -240,14 +365,44 @@ def _to_toml_key(key: str) -> str:
     """
     if _BARE_KEY.match(key):
         return key
-    return json.dumps(key, ensure_ascii=False)
+    return _to_json(key)
 
 
-def create_literal_block(settings: list[Setting], rawsource: str) -> nodes.Element:
-    """Build the TOML example as a code block in which each key is an anchor.
+_PLAIN_YAML = re.compile(r"^[A-Za-z_][A-Za-z0-9_.\-/]*$")
+_YAML_KEYWORDS = frozenset({
+    "true",
+    "false",
+    "yes",
+    "no",
+    "on",
+    "off",
+    "null",
+    "y",
+    "n",
+})
+
+
+def _to_yaml_key(text: str) -> str:
+    """Quote a string unless YAML reads it unquoted as the same string.
+
+    >>> _to_yaml_key("web.example.edu"), _to_yaml_key("no"), _to_yaml_key("a b")
+    ('web.example.edu', '"no"', '"a b"')
+    """
+    if _PLAIN_YAML.match(text) and text.lower() not in _YAML_KEYWORDS:
+        return text
+    return _to_json(text)
+
+
+def create_literal_block(
+    settings: list[Setting], fmt: str, rawsource: str
+) -> nodes.Element:
+    """Build the example as a code block in which each key is an anchor.
 
     The anchor is what sphinx-tippy attaches the tooltip to; it refers to itself so that
     the key doubles as a permalink to the setting.
+
+    The example is highlighted as a whole, so that the lexer sees the full context, and
+    the tokens of each key are then wrapped in its anchor.
 
     Sphinx highlights a literal block again when its ``rawsource`` equals its text,
     which would drop the inline nodes built here. A ``rawsource`` that differs from the
@@ -255,39 +410,60 @@ def create_literal_block(settings: list[Setting], rawsource: str) -> nodes.Eleme
     surrounding containers give the block the class names that themes and
     sphinx-copybutton expect from a regular code block.
     """
+    fragments = list(iter_fragments(settings, fmt))
+    tokens = _highlight("".join(text for text, _ in fragments), fmt)
     block = nodes.literal_block(rawsource, "")
-    for line, setting in _iter_lines(settings):
+    for text, setting in fragments:
+        inlines = _take(tokens, len(text))
         if setting is None:
-            block += _highlight(line)
+            block += inlines
             continue
-        key = _to_toml_key(setting.name)
         block += nodes.reference(
             "",
             "",
-            *_highlight(key, strip_newline=True),
+            *inlines,
             classes=[CSS_CLASS],
             ids=[setting.anchor],
             refid=setting.anchor,
         )
-        block += _highlight(line.removeprefix(key))
-    if block.children and block[-1].astext() == "\n":
-        block.pop()
     highlight = nodes.container("", block, classes=["highlight"])
-    return nodes.container("", highlight, classes=["highlight-toml", "notranslate"])
+    return nodes.container("", highlight, classes=[f"highlight-{fmt}", "notranslate"])
 
 
-def _highlight(source: str, *, strip_newline: bool = False) -> list[nodes.Node]:
-    r"""Tokenize TOML source into inline nodes that carry the CSS classes of Pygments.
+def _take(tokens: list[nodes.inline], length: int) -> list[nodes.inline]:
+    """Remove the first ``length`` characters from the tokens, splitting one if needed.
 
-    >>> [(node.astext(), node["classes"]) for node in _highlight("port = 80")]
-    [('port', ['n']), (' ', ['w']), ('=', ['o']), (' ', ['w']), ('80', ['mi']), ('\n', ['w'])]
+    >>> tokens = _highlight("port = 80", "toml")
+    >>> [node.astext() for node in _take(tokens, 6)], tokens[0].astext()
+    (['port', ' ', '='], ' ')
     """
-    lexer = get_lexer_by_name("toml", stripnl=False, ensurenl=not strip_newline)
+    taken: list[nodes.inline] = []
+    while length > 0:
+        token = tokens.pop(0)
+        text = token.astext()
+        if len(text) > length:
+            classes = token["classes"]
+            tokens.insert(0, nodes.inline("", text[length:], classes=classes))
+            token = nodes.inline("", text[:length], classes=classes)
+            text = text[:length]
+        taken.append(token)
+        length -= len(text)
+    return taken
+
+
+def _highlight(source: str, fmt: str) -> list[nodes.inline]:
+    r"""Tokenize source code into inline nodes that carry the CSS classes of Pygments.
+
+    >>> [(node.astext(), node["classes"]) for node in _highlight("port = 80", "toml")]
+    [('port', ['n']), (' ', ['w']), ('=', ['o']), (' ', ['w']), ('80', ['mi'])]
+    """
+    lexer = get_lexer_by_name(fmt, stripnl=False, ensurenl=False)
     return [
         nodes.inline(
             "", text, classes=[css_class] if (css_class := _css_class(t)) else []
         )
-        for t, text in lexer.get_tokens(source)
+        for _, t, text in lexer.get_tokens_unprocessed(source)
+        if text
     ]
 
 

@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_api_relink",
     "sphinx_copybutton",
+    "sphinx_design",
     "sphinx_toml_schema",
 ]
 generate_apidoc_package_path = f"../src/{PACKAGE_NAME}"
