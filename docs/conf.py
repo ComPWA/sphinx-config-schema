@@ -100,4 +100,5 @@ tippy_props = {
     "maxWidth": 500,
     "placement": "auto-start",
 }
+toc_object_entries = False
 version = get_package_version(PACKAGE_NAME)
