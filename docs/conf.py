@@ -5,13 +5,14 @@ from sphinx_api_relink.helpers import (
 )
 
 BRANCH = get_branch_name()
+REVISION = get_git_revision()
 ORGANIZATION = "ComPWA"
 REPO_NAME = "sphinx-config-schema"
 PACKAGE_NAME = REPO_NAME.replace("-", "_")
 
 add_module_names = False
 api_github_repo = f"{ORGANIZATION}/{REPO_NAME}"
-api_linkcode_rev = get_git_revision()
+api_linkcode_rev = REVISION
 api_target_substitutions = {"Sphinx": "sphinx.application.Sphinx"}
 autodoc_default_options = {
     "members": True,
@@ -39,6 +40,7 @@ html_context = {
     "github_repo": REPO_NAME,
     "github_user": ORGANIZATION,
     "github_version": BRANCH,
+    "github_view_rev": REVISION,
 }
 html_favicon = "_static/favicon.ico"
 html_last_updated_fmt = "%-d %B %Y"
@@ -68,7 +70,11 @@ html_theme_options = {
     "logo": {"text": REPO_NAME},
     "navbar_align": "right",
     "navigation_with_keys": False,
-    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+    "secondary_sidebar_items": [
+        "page-toc",
+        "edit-this-page",
+        "view-on-github",
+    ],
     "show_prev_next": False,
     "show_toc_level": 2,
     "use_edit_page_button": True,
@@ -88,6 +94,7 @@ nitpick_ignore = [
 nitpicky = True
 project = REPO_NAME
 release = get_package_version(PACKAGE_NAME)
+templates_path = ["_templates"]
 tippy_anchor_parent_selector = "article.bd-article"
 tippy_props = {
     "delay": [200, 100],

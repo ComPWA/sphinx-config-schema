@@ -28,6 +28,7 @@
     ".pre-commit-config.yaml",
     ".prettierignore",
     ".vscode/*",
+    "docs/_templates/*",
     "docs/conf.py",
     "pyproject.toml"
   ],
