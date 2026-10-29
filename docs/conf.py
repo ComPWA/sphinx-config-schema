@@ -8,9 +8,9 @@ from sphinx_api_relink.helpers import (
 
 BRANCH = get_branch_name()
 ORGANIZATION = "ComPWA"
-REPO_NAME = "sphinx-toml-schema"
-REPO_TITLE = "sphinx-toml-schema"
-PACKAGE_NAME = "sphinx_toml_schema"
+REPO_NAME = "sphinx-config-schema"
+REPO_TITLE = "sphinx-config-schema"
+PACKAGE_NAME = "sphinx_config_schema"
 
 add_module_names = False
 api_github_repo = f"{ORGANIZATION}/{REPO_NAME}"
@@ -35,7 +35,7 @@ extensions = [
     "sphinx_api_relink",
     "sphinx_copybutton",
     "sphinx_design",
-    "sphinx_toml_schema",
+    "sphinx_config_schema",
 ]
 generate_apidoc_package_path = f"../src/{PACKAGE_NAME}"
 html_context = {

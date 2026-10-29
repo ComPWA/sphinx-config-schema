@@ -1,4 +1,4 @@
-name-template: sphinx-toml-schema $NEXT_PATCH_VERSION
+name-template: sphinx-config-schema $NEXT_PATCH_VERSION
 tag-template: $NEXT_PATCH_VERSION
 
 references:
@@ -36,4 +36,4 @@ sort-direction: ascending
 template: |
   $CHANGES
 
-  _The full changelog as commits can be found [here](https://github.com/ComPWA/sphinx-toml-schema/compare/$PREVIOUS_TAG...$NEXT_PATCH_VERSION)._
+  _The full changelog as commits can be found [here](https://github.com/ComPWA/sphinx-config-schema/compare/$PREVIOUS_TAG...$NEXT_PATCH_VERSION)._

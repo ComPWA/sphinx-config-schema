@@ -5,7 +5,7 @@ import pytest
 import yaml
 from docutils import nodes
 
-from sphinx_toml_schema import Setting, create_literal_block, iter_settings, render
+from sphinx_config_schema import Setting, create_literal_block, iter_settings, render
 
 SCHEMA = {
     "properties": {
@@ -75,7 +75,7 @@ def test_empty_json():
 )
 def test_keys_become_anchors(fmt: str, key: str):
     settings = [Setting(("tool", "demo"), "web.example.edu", "x", "")]
-    block = create_literal_block(settings, fmt, rawsource="toml-schema")
+    block = create_literal_block(settings, fmt, rawsource="config-schema")
     (reference,) = block.findall(nodes.reference)
     assert reference["ids"] == ["tool-demo-web-example-edu"]
     assert reference.astext() == key  # cspell:ignore astext

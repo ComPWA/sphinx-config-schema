@@ -1,5 +1,5 @@
 [project]
-name = "sphinx-toml-schema"
+name = "sphinx-config-schema"
 description = "Render a JSON schema as a copyable TOML, YAML, or JSON example with tooltips in Sphinx"
 requires-python = ">=3.11"
 license = "MIT"
@@ -37,10 +37,10 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.urls]
-Changelog = "https://github.com/ComPWA/sphinx-toml-schema/releases"
-Documentation = "https://compwa.github.io/sphinx-toml-schema"
-Issues = "https://github.com/ComPWA/sphinx-toml-schema/issues"
-Source = "https://github.com/ComPWA/sphinx-toml-schema"
+Changelog = "https://github.com/ComPWA/sphinx-config-schema/releases"
+Documentation = "https://compwa.github.io/sphinx-config-schema"
+Issues = "https://github.com/ComPWA/sphinx-config-schema/issues"
+Source = "https://github.com/ComPWA/sphinx-config-schema"
 
 [dependency-groups]
 dev = [
@@ -80,8 +80,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.compwa.policy]
-repo-name = "sphinx-toml-schema"
-repo-title = "sphinx-toml-schema"
+repo-name = "sphinx-config-schema"
+repo-title = "sphinx-config-schema"
 
 [tool.compwa.policy.python]
 type-checker = ["ty"]
@@ -169,7 +169,7 @@ heading = "Testing"
 [tool.poe.groups.test.tasks.cov]
 cmd = """
 pytest \
-    --cov=sphinx_toml_schema \
+    --cov=sphinx_config_schema \
     --cov-fail-under=75 \
     --cov-report=html \
     --cov-report=xml \
@@ -354,14 +354,14 @@ include-package-data = false
 package-dir = { "" = "src" }
 
 [tool.setuptools.package-data]
-sphinx_toml_schema = ["_static/*.css", "py.typed"]
+sphinx_config_schema = ["_static/*.css", "py.typed"]
 
 [tool.setuptools.packages.find]
 namespaces = false
 where = ["src"]
 
 [tool.setuptools_scm]
-version_file = "src/sphinx_toml_schema/version.py"
+version_file = "src/sphinx_config_schema/version.py"
 
 [tool.tombi.format.rules]
 indent-width = 4

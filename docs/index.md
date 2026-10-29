@@ -1,32 +1,32 @@
-# sphinx-toml-schema
+# sphinx-config-schema
 
 :::{title} Welcome
 :::
 
-`sphinx-toml-schema` is a [Sphinx](https://www.sphinx-doc.org) extension that renders a [JSON schema](https://json-schema.org) as a copyable TOML, YAML, or JSON example. Each key in the example shows the description of that setting as a tooltip, via [`sphinx-tippy`](https://github.com/sphinx-extensions2/sphinx-tippy), and links to itself so that it can be shared as a permalink.
+`sphinx-config-schema` is a [Sphinx](https://www.sphinx-doc.org) extension that renders a [JSON schema](https://json-schema.org) as a copyable TOML, YAML, or JSON example. Each key in the example shows the description of that setting as a tooltip, via [`sphinx-tippy`](https://github.com/sphinx-extensions2/sphinx-tippy), and links to itself so that it can be shared as a permalink.
 
 This is useful for tools that read their configuration from a file, such as a `[tool.*]` table in `pyproject.toml`, and that generate a JSON schema for it, for instance for editor completion.
 
 ## Installation
 
 ```bash
-pip install sphinx-toml-schema
+pip install sphinx-config-schema
 ```
 
 Then add the extension to your `conf.py`. It loads `sphinx_tippy` automatically:
 
 ```python
 extensions = [
-    "sphinx_toml_schema",
+    "sphinx_config_schema",
 ]
 ```
 
 ## Usage
 
-The `toml-schema` directive takes the path to a JSON schema file, relative to the current document or, with a leading `/`, to the documentation source directory. The optional `table` option sets the dotted path of the table under which the settings appear and `caption` adds a caption to the code block:
+The `config-schema` directive takes the path to a JSON schema file, relative to the current document or, with a leading `/`, to the documentation source directory. The optional `table` option sets the dotted path of the table under which the settings appear and `caption` adds a caption to the code block:
 
 ````md
-```{toml-schema} example.schema.json
+```{config-schema} example.schema.json
 :caption: pyproject.toml
 :table: tool.example
 ```
@@ -38,7 +38,7 @@ The `format` option renders the example as `yaml` or `json` instead of the defau
 
 :::{tab-item} TOML
 
-```{toml-schema} example.schema.json
+```{config-schema} example.schema.json
 :caption: pyproject.toml
 :table: tool.example
 ```
@@ -47,7 +47,7 @@ The `format` option renders the example as `yaml` or `json` instead of the defau
 
 :::{tab-item} YAML
 
-```{toml-schema} example.schema.json
+```{config-schema} example.schema.json
 :caption: config.yaml
 :format: yaml
 ```
@@ -56,7 +56,7 @@ The `format` option renders the example as `yaml` or `json` instead of the defau
 
 :::{tab-item} JSON
 
-```{toml-schema} example.schema.json
+```{config-schema} example.schema.json
 :caption: config.json
 :format: json
 ```
@@ -75,6 +75,6 @@ The tooltips use the colors of the [PyData Sphinx Theme](https://pydata-sphinx-t
 
 ```{toctree}
 :hidden:
-API <api/sphinx_toml_schema>
-Changelog <https://github.com/ComPWA/sphinx-toml-schema/releases>
+API <api/sphinx_config_schema>
+Changelog <https://github.com/ComPWA/sphinx-config-schema/releases>
 ```

@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from sphinx.application import Sphinx
     from sphinx.environment import BuildEnvironment
 
-CSS_CLASS = "toml-schema-key"
+CSS_CLASS = "config-schema-key"
 STATIC_DIR = Path(__file__).parent / "_static"
 
 
@@ -49,7 +49,7 @@ class Setting:
         return nodes.make_id(".".join((*self.table, self.name)) + self.anchor_suffix)
 
 
-class TomlSchemaDirective(SphinxDirective):
+class ConfigSchemaDirective(SphinxDirective):
     """Render a copyable TOML, YAML, or JSON example from a JSON schema.
 
     Each key in the example is an anchor that sphinx-tippy turns into a tooltip with the
@@ -498,9 +498,9 @@ def to_tooltip(description: str) -> str:
 
 def _get_tips(env: BuildEnvironment) -> dict[str, dict[str, str]]:
     """Get the tooltips per document, which are stored in the build environment."""
-    if not hasattr(env, "toml_schema_tips"):
-        env.toml_schema_tips = {}  # ty: ignore[invalid-assignment]
-    return env.toml_schema_tips  # ty: ignore[unresolved-attribute]
+    if not hasattr(env, "config_schema_tips"):
+        env.config_schema_tips = {}  # ty: ignore[invalid-assignment]
+    return env.config_schema_tips  # ty: ignore[unresolved-attribute]
 
 
 def _purge_tips(_app: Sphinx, env: BuildEnvironment, docname: str) -> None:
@@ -529,7 +529,7 @@ def _register_tips(
 
 def setup(app: Sphinx) -> dict[str, Any]:
     app.setup_extension("sphinx_tippy")
-    app.add_directive("toml-schema", TomlSchemaDirective)
+    app.add_directive("config-schema", ConfigSchemaDirective)
     app.connect("builder-inited", _add_static_path)
     app.connect("env-purge-doc", _purge_tips)
     app.connect("env-merge-info", _merge_tips)
@@ -537,10 +537,10 @@ def setup(app: Sphinx) -> dict[str, Any]:
     return {
         "parallel_read_safe": True,
         "parallel_write_safe": True,
-        "version": importlib.metadata.version("sphinx-toml-schema"),
+        "version": importlib.metadata.version("sphinx-config-schema"),
     }
 
 
 def _add_static_path(app: Sphinx) -> None:
     app.config.html_static_path.append(str(STATIC_DIR))
-    app.add_css_file("toml-schema.css")
+    app.add_css_file("config-schema.css")
