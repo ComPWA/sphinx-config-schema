@@ -53,6 +53,7 @@ doc = [
     "myst-parser",
     "pydata-sphinx-theme",
     "sphinx-api-relink",
+    "sphinx-codeautolink",
     "sphinx-copybutton",
     "sphinx-design",
 ]

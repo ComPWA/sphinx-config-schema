@@ -20,10 +20,13 @@ autodoc_default_options = {
 }
 autodoc_member_order = "bysource"
 autodoc_typehints_format = "short"
+codeautolink_concat_default = True
+codeautolink_global_preface = f"from {PACKAGE_NAME} import *"
 default_role = "py:obj"
 extensions = [
     "myst_parser",
     "sphinx_api_relink",
+    "sphinx_codeautolink",
     "sphinx_config_schema",
     "sphinx_copybutton",
     "sphinx_design",
