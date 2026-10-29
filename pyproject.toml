@@ -1,0 +1,385 @@
+[project]
+name = "sphinx-config-schema"
+description = "Render a JSON schema as a copyable TOML, YAML, or JSON example with tooltips in Sphinx"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Common Partial Wave Analysis" }]
+keywords = [
+    "json-schema",
+    "sphinx",
+    "toml",
+    "yaml",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Sphinx :: Extension",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Documentation :: Sphinx",
+    "Typing :: Typed",
+]
+dependencies = [
+    "docutils",
+    "pygments",
+    "sphinx",
+    "sphinx-tippy",
+    "typing-extensions",
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Changelog = "https://github.com/ComPWA/sphinx-config-schema/releases"
+Documentation = "https://compwa.github.io/sphinx-config-schema"
+Issues = "https://github.com/ComPWA/sphinx-config-schema/issues"
+Source = "https://github.com/ComPWA/sphinx-config-schema"
+
+[dependency-groups]
+dev = [
+    "ruff",
+    { include-group = "doc" },
+    { include-group = "style" },
+    { include-group = "test" },
+]
+doc = [
+    "myst-parser",
+    "pydata-sphinx-theme",
+    "sphinx-api-relink",
+    "sphinx-codeautolink",
+    "sphinx-copybutton",
+    "sphinx-design",
+]
+style = [
+    "ty",
+    { include-group = "types" },
+]
+test = [
+    "beautifulsoup4",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "pyyaml",
+]
+types = [
+    { include-group = "doc" },
+    { include-group = "test" },
+]
+
+[build-system]
+requires = [
+    "setuptools>=61.2",
+    "setuptools_scm",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.compwa.policy]
+repo-name = "sphinx-config-schema"
+repo-title = "sphinx-config-schema"
+
+[tool.compwa.policy.python]
+type-checker = ["ty"]
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "benchmarks/**/*.py",
+    "docs/**/*.ipynb",
+    "docs/**/*.py",
+    "examples/**/*.py",
+    "tests/**/*.py",
+]
+source = ["src"]
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:"]
+
+[tool.docstrfmt]
+docstring-trailing-line = false
+format-python-code-blocks = false
+
+[tool.lychee]
+cache = true
+exclude = [
+    "%7B(?:ORGANIZATION|REPO_NAME)%7D",  # These links in conf.py are only complete when the code runs
+]
+extensions = ["json", "md", "py", "toml", "yaml", "yml"]
+include_fragments = "anchor-only"
+include_verbatim = true
+max_cache_age = "2d"
+max_retries = 3
+remap = [
+    '^git\+(https://[^@]+)(@.*)?$ $1',  # Check the repository behind pip-style VCS requirements
+]
+retry_wait_time = 5
+timeout = 30
+
+[tool.poe.executor]
+isolated = true
+no-group = "dev"
+type = "uv"
+
+[tool.poe.groups.doc]
+heading = "Documentation"
+
+[tool.poe.groups.doc.tasks.doc]
+cmd = """
+sphinx-build \
+    --builder=html \
+    --fail-on-warning \
+    --keep-going \
+    --show-traceback \
+    docs/ \
+    docs/_build/html/
+"""
+executor = { group = "doc" }
+help = "Build the HTML documentation"
+
+[tool.poe.groups.doc.tasks.doclive]
+cmd = """
+sphinx-autobuild \
+    --builder=html \
+    --open-browser \
+    --port=0 \
+    --re-ignore=/__pycache__(/.*)?$ \
+    --re-ignore=/_build(/.*)?$ \
+    --re-ignore=/api(/.*)?$ \
+    --re-ignore=/version\\.py$ \
+    --watch=src \
+    docs/ \
+    docs/_build/html/
+"""
+executor = { group = "doc", with = "sphinx-autobuild" }
+help = "Set up a server to directly preview changes to the HTML pages"
+
+[tool.poe.groups.doc.tasks.linkcheck]
+cmd = "uvx --from lychee-bin lychee . --quiet"
+executor = { type = "simple" }
+help = "Check links and fragments in repository sources (requires internet connection)"
+
+[tool.poe.groups.test]
+heading = "Testing"
+
+[tool.poe.groups.test.tasks.cov]
+cmd = """
+pytest \
+    --cov=sphinx_config_schema \
+    --cov-fail-under=75 \
+    --cov-report=html \
+    --cov-report=xml \
+    ${paths}
+"""
+executor = { group = "test" }
+help = "Compute how much of the source code is covered by tests"
+
+[[tool.poe.groups.test.tasks.cov.args]]
+default = "src tests"
+multiple = true
+name = "paths"
+positional = true
+
+[tool.poe.groups.test.tasks.test]
+cmd = "pytest --no-summary ${paths}"
+executor = { group = "test" }
+help = "Run all unit tests"
+
+[[tool.poe.groups.test.tasks.test.args]]
+default = "src tests"
+multiple = true
+name = "paths"
+positional = true
+
+[tool.poe.groups.test.tasks.test-all]
+help = "Run all tests on each supported Python version"
+sequence = [
+    "test-py311 ${paths}",
+    "test-py312 ${paths}",
+    "test-py313 ${paths}",
+    "test-py314 ${paths}",
+    "test-py315 ${paths}",
+]
+
+[[tool.poe.groups.test.tasks.test-all.args]]
+default = ""
+multiple = true
+name = "paths"
+positional = true
+
+[tool.poe.groups.test.tasks.test-py311]
+env = { UV_PYTHON = "3.11" }
+ref = "test"
+
+[tool.poe.groups.test.tasks.test-py312]
+env = { UV_PYTHON = "3.12" }
+ref = "test"
+
+[tool.poe.groups.test.tasks.test-py313]
+env = { UV_PYTHON = "3.13" }
+ref = "test"
+
+[tool.poe.groups.test.tasks.test-py314]
+env = { UV_PYTHON = "3.14" }
+ref = "test"
+
+[tool.poe.groups.test.tasks.test-py315]
+env = { UV_PYTHON = "3.15" }
+ref = "test"
+
+[tool.poe.tasks.all]
+help = "Run all continuous integration (CI) tasks locally"
+ignore_fail = "return_non_zero"
+sequence = [
+    "style",
+    "doc",
+    "cov",
+    "test-all",
+    "linkcheck",
+]
+
+[tool.poe.tasks.style]
+cmd = "prek run --all-files"
+executor = { group = "style" }
+help = "Perform all linting, formatting, and spelling checks"
+
+[tool.poe.tasks.upgrade]
+executor = { type = "simple" }
+help = "Upgrade lock files"
+parallel = [
+    "_upgrade-precommit",
+    "_upgrade-uv",
+]
+
+[tool.poe.tasks._upgrade-precommit]
+cmd = "prek autoupdate"
+executor = { type = "simple" }
+
+[tool.poe.tasks._upgrade-uv]
+cmd = "uv lock --upgrade"
+executor = { type = "simple" }
+
+[tool.pytest]
+addopts = [
+    "--color=yes",
+    "--doctest-continue-on-failure",
+    "--doctest-modules",
+    "--durations-min=0",
+    "--durations=3",
+    "--import-mode=importlib",
+]
+filterwarnings = ["error"]
+minversion = "9.0"
+testpaths = ["src", "tests"]
+
+[tool.ruff]
+preview = true
+show-fixes = true
+src = [
+    "src",
+    "tests",
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "DOC",
+    "PTH",
+    "any-type",
+    "if-else-block-instead-of-if-exp",
+    "incorrect-blank-line-before-class",
+    "line-too-long",
+    "logging-f-string",
+    "missing-copyright-notice",
+    "missing-dashed-underline-after-section",
+    "missing-section-name-colon",
+    "missing-trailing-comma",
+    "multi-line-summary-second-line",
+    "non-empty-init-module",
+    "pytest-fixture-incorrect-parentheses-style",
+    "read-whole-file",
+    "reimplemented-starmap",
+    "single-line-implicit-string-concatenation",
+    "suspicious-subprocess-import",
+    "undocumented-magic-method",
+    "undocumented-public-class",
+    "undocumented-public-function",
+    "undocumented-public-init",
+    "undocumented-public-method",
+    "unspecified-encoding",
+    "write-whole-file",
+]
+task-tags = ["cspell"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "ANN",
+    "D",
+    "T20",
+    "assert",
+    "boolean-type-hint-positional-argument",
+    "float-equality-comparison",
+    "implicit-namespace-package",
+    "import-private-name",
+    "magic-value-comparison",
+    "no-self-use",
+    "private-member-access",
+]
+"docs/*" = [
+    "assert",
+    "implicit-namespace-package",
+    "request-without-timeout",
+]
+"docs/conf.py" = [
+    "builtin-variable-shadowing",
+    "undocumented-public-module",
+]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.setuptools]
+include-package-data = false
+package-dir = { "" = "src" }
+
+[tool.setuptools.package-data]
+sphinx_config_schema = ["_static/*.css", "py.typed"]
+
+[tool.setuptools.packages.find]
+namespaces = false
+where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/sphinx_config_schema/version.py"
+
+[tool.tombi.format.rules]
+indent-width = 4
+line-width = 88
+
+[tool.tombi.lint.rules]
+key-empty = "off"
+
+[[tool.tombi.schemas]]
+root = "tool.compwa.policy"
+path = "https://raw.githubusercontent.com/ComPWA/policy/0.10.2/compwa-policy.schema.json"
+include = ["pyproject.toml"]
+
+[tool.ty.rules]
+division-by-zero = "warn"
+possibly-missing-import = "warn"
+possibly-unresolved-reference = "warn"
+
+[tool.ty.terminal]
+error-on-warning = true

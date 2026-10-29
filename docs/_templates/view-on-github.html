@@ -1,0 +1,12 @@
+{# Links to the page source on GitHub, derived from the edit-this-page URL. #}
+{% if sourcename is defined and theme_use_edit_page_button==true and
+page_source_suffix %}
+<div class="tocsection viewongithub">
+  <a
+    href="{{ get_edit_provider_and_url()[1] | replace('/edit/' ~ github_version ~ '/', '/blob/' ~ github_view_rev ~ '/', 1) }}"
+  >
+    <i class="fa-brands fa-github"></i>
+    View on GitHub
+  </a>
+</div>
+{% endif %}

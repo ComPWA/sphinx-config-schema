@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "example configuration",
+  "description": "Settings of the example tool.",
+  "type": "object",
+  "properties": {
+    "output": {
+      "description": "Directory to which the tool writes its results.",
+      "type": "string",
+      "default": "build"
+    },
+    "verbose": {
+      "description": "Print every step, not only warnings and errors.",
+      "type": "boolean",
+      "default": false
+    },
+    "log-level": {
+      "description": "Lowest severity of the messages that the tool prints.",
+      "type": "string",
+      "enum": ["debug", "info", "warning", "error"],
+      "default": "warning"
+    },
+    "exclude": {
+      "description": "Glob patterns of files to skip, such as ``*.tmp``.",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "server": {
+      "description": "Settings of the server that hosts the output.",
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Host name of the server.",
+          "type": "string",
+          "examples": ["example.org"]
+        },
+        "port": {
+          "description": "Port on which the server listens.",
+          "type": "integer",
+          "default": 8080,
+          "examples": [80, 443]
+        }
+      }
+    }
+  }
+}

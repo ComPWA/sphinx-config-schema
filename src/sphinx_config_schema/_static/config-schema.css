@@ -1,0 +1,12 @@
+.tippy-box {
+  background-color: var(--pst-color-surface, #333);
+  border: 1px solid var(--pst-color-border, transparent);
+  color: var(--pst-color-text-base, #fff);
+}
+
+.tippy-arrow {
+  color: var(--pst-color-surface, #333);
+}
+.tippy-content > :last-child {
+  margin-bottom: 0;
+}
