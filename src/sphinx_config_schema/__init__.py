@@ -44,6 +44,10 @@ class Setting:
     description: str
     anchor_suffix: str = field(default="", repr=False)
     """Distinguishes `.anchor` from that of the same key elsewhere on the page."""
+    examples: tuple[Any, ...] = field(default=(), repr=False)
+    """Example values from the schema, listed in the tooltip unless `.value` shows them."""
+    allowed: tuple[Any, ...] = field(default=(), repr=False)
+    """The values that the schema allows for this setting through ``enum``."""
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -80,7 +84,7 @@ class ConfigSchemaDirective(SphinxDirective):
     """Render a copyable TOML, YAML, or JSON example from a JSON schema.
 
     Each key in the example is an anchor that sphinx-tippy turns into a tooltip with the
-    description of that setting.
+    description of that setting and the values that the example does not show.
     """
 
     has_content = False
@@ -110,7 +114,9 @@ class ConfigSchemaDirective(SphinxDirective):
             raise self.error(str(exc)) from exc
         tips: dict[str, str] = _get_tips(self.env).setdefault(self.env.docname, {})
         settings = [_make_unique(s, fmt, tips) for s in _drop_empty_tables(settings)]
-        tips.update({f"#{s.anchor}": to_tooltip(s.description) for s in settings})
+        tips.update({
+            f"#{s.anchor}": tip for s in settings if (tip := _entry_tooltip(s))
+        })
         example: nodes.Node = create_literal_block(settings, fmt, rawsource=self.name)
         self.set_source_info(example)
         caption = self.options.get("caption")
@@ -153,22 +159,28 @@ def iter_settings(
 
     Settings without a usable value are skipped, or reported with a `ValueError` after
     all other settings have been collected if ``strict`` is set. Nested tables are
-    yielded as a `Table`, so that their key can carry a description as well.
+    yielded as a `Table`, so that their key can carry a description as well. So is the
+    last part of ``table``, with the description of the schema itself.
 
     >>> schema = {
+    ...     "description": "Demo settings.",
     ...     "properties": {
     ...         "name": {"description": "Project name.", "examples": ["demo"]},
     ...         "optional": {"type": "string"},
-    ...     }
+    ...     },
     ... }
-    >>> list(iter_settings(schema, table=("tool", "demo")))
-    [Setting(table=('tool', 'demo'), name='name', value='demo', description='Project name.')]
+    >>> for entry in iter_settings(schema, table=("tool", "demo")):
+    ...     print(entry)
+    Table(table=('tool',), name='demo', description='Demo settings.')
+    Setting(table=('tool', 'demo'), name='name', value='demo', description='Project name.')
     >>> list(iter_settings(schema, strict=True))
     Traceback (most recent call last):
         ...
     ValueError: Settings without a default or example: optional
     """
     missing: list[str] = []
+    if table:
+        yield Table(table[:-1], table[-1], schema.get("description", ""))
     for sub_table, properties in _iter_tables(
         table, schema.get("properties", {}), schema
     ):
@@ -184,8 +196,14 @@ def iter_settings(
             if value is None:
                 missing.append(".".join((*sub_table, name)))
                 continue
-            description = field_schema.get("description", "")
-            yield Setting(sub_table, name, value, description)
+            yield Setting(
+                sub_table,
+                name,
+                value,
+                description=field_schema.get("description", ""),
+                examples=tuple(field_schema.get("examples", [])),
+                allowed=tuple(field_schema.get("enum") or resolved.get("enum", [])),
+            )
     if strict and missing:
         msg = f"Settings without a default or example: {', '.join(missing)}"
         raise ValueError(msg)
@@ -557,6 +575,37 @@ def to_tooltip(description: str) -> str:
     escaped = html.escape(description)
     body = _LITERAL_PATTERN.sub(r"<code>\g<text></code>", escaped)
     return f"<p>{body}</p>"
+
+
+def _entry_tooltip(entry: Entry) -> str:
+    """Create the tooltip of a key, with the values that the example does not show.
+
+    The tooltip is empty if there is nothing to show, in which case the key gets none.
+
+    >>> _entry_tooltip(Setting((), "mode", "a", "Mode.", allowed=("a", "b")))
+    '<p>Mode.</p><p>Allowed values: <code>&quot;a&quot;</code>, <code>&quot;b&quot;</code></p>'
+    >>> _entry_tooltip(Setting((), "port", 80, "", examples=(80, 8080)))
+    '<p>Examples: <code>8080</code></p>'
+    >>> _entry_tooltip(Table((), "format", ""))
+    ''
+    """
+    tooltip = to_tooltip(entry.description) if entry.description else ""
+    if isinstance(entry, Table):
+        return tooltip
+    if entry.allowed:
+        tooltip += f"<p>Allowed values: {_code_list(entry.allowed)}</p>"
+    examples = [e for e in entry.examples if e is not None and e != entry.value]
+    if examples:
+        tooltip += f"<p>Examples: {_code_list(examples)}</p>"
+    return tooltip
+
+
+def _code_list(values: Sequence[Any]) -> str:
+    return ", ".join(_code(v) for v in values)
+
+
+def _code(value: Any) -> str:
+    return f"<code>{html.escape(json.dumps(value))}</code>"
 
 
 def _get_tips(env: BuildEnvironment) -> dict[str, dict[str, str]]:

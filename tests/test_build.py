@@ -11,15 +11,18 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 SCHEMA = {
+    "description": "Example settings.",
     "properties": {
         "output": {"description": "Output ``directory``.", "default": "build"},
         "missing": {"description": "No value."},
         "server": {
             "type": "object",
             "description": "Server settings.",
-            "properties": {"port": {"description": "Port.", "default": 8080}},
+            "properties": {
+                "port": {"description": "Port.", "default": 8080, "examples": [80]}
+            },
         },
-    }
+    },
 }
 
 
@@ -81,6 +84,7 @@ def test_formats(tmp_path: Path, fmt: str, expected: str):
     assert code.get_text() == expected
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
     assert set(keys) == {
+        "tool-example",
         "tool-example-output",
         "tool-example-server",
         "tool-example-server-port",
@@ -91,6 +95,7 @@ def test_keys_are_anchors(html_dir: Path):
     soup = BeautifulSoup((html_dir / "index.html").read_text(), "html.parser")
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
     assert keys == {
+        "tool-example": "example",
         "tool-example-output": "output",
         "tool-example-server": "server",
         "tool-example-server-port": "port",
@@ -108,6 +113,8 @@ def test_tooltips(html_dir: Path):
     assert '"a[href=\\"#tool-example-output\\"]"' in tips
     assert "Output <code>directory</code>." in tips
     assert "Server settings." in tips
+    assert "Example settings." in tips
+    assert "Examples: <code>80</code>" in tips
     assert (html_dir / "_static" / "config-schema.css").is_file()
 
 
