@@ -1,0 +1,4 @@
+overrides:
+  - files: ["*.schema.json"]
+    options:
+      objectWrap: collapse

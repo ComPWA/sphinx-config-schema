@@ -1,0 +1,83 @@
+ci:
+  autofix_commit_msg: "MAINT: implement pre-commit autofixes"
+  autoupdate_commit_msg: "MAINT: upgrade lock files"
+  autoupdate_schedule: quarterly
+  skip:
+    - tombi-format
+    - tombi-lint
+    - ty
+
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  - repo: https://github.com/ComPWA/policy
+    rev: 0.10.2
+    hooks:
+      - id: check-dev-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: name-tests-test
+        name: Tests should start with test_
+        args: ["--django"]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/tombi-toml/tombi-pre-commit
+    rev: v1.9.8
+    hooks:
+      - id: tombi-format
+      - id: tombi-lint
+        args: [--error-on-warnings]
+
+  - repo: https://github.com/ComPWA/prettier-pre-commit
+    rev: v3.9.10
+    hooks:
+      - id: prettier
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v10.4.0
+    hooks:
+      - id: cspell
+
+  - repo: https://github.com/LilSpazJoekp/docstrfmt
+    rev: v2.2.1
+    hooks:
+      - id: docstrfmt
+
+  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
+    rev: 3.11.1
+    hooks:
+      - id: editorconfig-checker
+        name: editorconfig
+        alias: ec
+        exclude: >-
+          (?x)^(
+            .*\.py
+          )$
+
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.95
+    hooks:
+      - id: ty
+        args: [--group=types, --no-default-groups]

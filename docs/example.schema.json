@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "example configuration",
+  "type": "object",
+  "properties": {
+    "output": {
+      "description": "Directory to which the tool writes its results.",
+      "type": "string",
+      "default": "build"
+    },
+    "verbose": {
+      "description": "Print every step, not only warnings and errors.",
+      "type": "boolean",
+      "default": false
+    },
+    "exclude": {
+      "description": "Glob patterns of files to skip, such as ``*.tmp``.",
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "description": "Host name of the server.",
+          "type": "string",
+          "examples": ["example.org"]
+        },
+        "port": {
+          "description": "Port on which the server listens.",
+          "type": "integer",
+          "default": 8080
+        }
+      }
+    }
+  }
+}

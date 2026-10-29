@@ -1,0 +1,39 @@
+name-template: sphinx-toml-schema $NEXT_PATCH_VERSION
+tag-template: $NEXT_PATCH_VERSION
+
+references:
+  - main
+  - epic/*
+
+categories:
+  - title: ✨ New features
+    label: ✨ Feature
+  - title: ⚠️ Enhancements and optimizations
+    label: ⚙️ Enhancement
+  - title: ⚠️ API changes
+    label: ⚠️ Interface
+  - title: ⚠️ Changes that may affect behavior
+    label: ❗ Behavior
+  - title: 🐛 Bug fixes
+    label: 🐛 Bug
+  - title: 📝 Documentation
+    label: 📝 Docs
+  - title: 🔨 Maintenance
+    labels:
+      - 🔨 Maintenance
+      - ⬆️ Lock
+  - title: 🖱️ Developer Experience
+    label: 🖱️ DX
+
+change-template: "- $TITLE (#$NUMBER)"
+
+replacers:
+  - search: /([A-Z]+!?:\s*)(.*)/g
+    replace: $2
+
+sort-direction: ascending
+
+template: |
+  $CHANGES
+
+  _The full changelog as commits can be found [here](https://github.com/ComPWA/sphinx-toml-schema/compare/$PREVIOUS_TAG...$NEXT_PATCH_VERSION)._

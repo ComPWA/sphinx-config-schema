@@ -1,0 +1,14 @@
+name: PR linting
+on:
+  pull_request:
+    types:
+      - edited
+      - labeled
+      - opened
+      - reopened
+      - synchronize
+      - unlabeled
+
+jobs:
+  lint-pr:
+    uses: ComPWA/actions/.github/workflows/pr-linting.yml@f9873a74ec6f40f8b3d17327f3f0f8e517a5becd # v4.1.6
