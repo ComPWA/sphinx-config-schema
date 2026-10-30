@@ -96,6 +96,8 @@ Each setting shows its `default` or, if it has none, its first entry in `example
 
 The tooltip of a key shows the `description` of the setting, or of the schema itself for the last part of the {rst:dir}`table <config-schema:table>`, with ` ``code`` ` rendered as code, followed by its allowed values if it has an `enum` and any examples that the code block does not show. When the same key appears more than once on a page, as in the tabs above, the later anchors get the format as a suffix, such as `#tool-example-output-yaml`, so that each permalink stays unique.
 
+The `color` setting above has a nullable enum and a `null` default. The example therefore shows its first non-null choice, `auto`, and its tooltip lists all allowed values.
+
 The example is built from regular docutils nodes, so it also appears in other output formats, such as LaTeX and plain text. There, each key becomes a label that can be referenced.
 
 The tooltips use the colors of the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) and its derivatives where available, so that they follow light and dark mode.

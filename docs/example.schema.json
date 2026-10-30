@@ -20,6 +20,14 @@
       "enum": ["debug", "info", "warning", "error"],
       "default": "warning"
     },
+    "color": {
+      "description": "When to use color in terminal output.",
+      "anyOf": [
+        { "type": "null" },
+        { "type": "string", "enum": ["auto", "always", "never"] }
+      ],
+      "default": null
+    },
     "exclude": {
       "description": "Glob patterns of files to skip, such as ``*.tmp``.",
       "type": "array",
