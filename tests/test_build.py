@@ -322,3 +322,32 @@ def test_nullable_enum_tooltip(tmp_path: Path, keyword: str):
     assert "Allowed values:" in tips
     assert "&quot;a&quot;" in tips
     assert "&quot;b&quot;" in tips
+
+
+def test_option_role(tmp_path: Path):
+    app = _build(
+        tmp_path,
+        directive=dedent("""
+            :config-schema:option:`index:tool.example.output-toml`
+            :config-schema:option:`Server <index:tool.example.server-toml>`
+            :config-schema:option:`index:tool.example.missing`
+            :config-schema:option:`index:tool.example.server.port-json`
+
+            .. config-schema:: example.schema.json
+               :table: tool.example
+
+            .. config-schema:: example.schema.json
+               :table: tool.example
+               :format: json
+        """),
+    )
+    assert "tool.example.missing" in app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    links = {a.get_text(): a["href"] for a in soup.select("p a.reference.internal")}
+    assert links == {
+        "output": "#tool.example.output-toml",
+        "Server": "#tool.example.server-toml",
+        "port": "#tool.example.server.port-json",
+    }
+    assert soup.select_one('p a[href="#tool.example.output-toml"] code')
+    assert soup.select_one('p a[href="#tool.example.server-toml"] code')
