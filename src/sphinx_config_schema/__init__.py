@@ -13,7 +13,7 @@ from collections.abc import Sequence  # ruff: ignore[typing-only-standard-librar
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 CSS_CLASS = "config-schema-key"
 STATIC_DIR = Path(__file__).parent / "_static"
+_NO_DEFAULT = object()
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,12 @@ class Setting:
     """Example values from the schema, listed in the tooltip unless `.value` shows them."""
     allowed: tuple[Any, ...] = field(default=(), repr=False)
     """The values that the schema allows for this setting through ``enum``."""
+    default: Any = field(default=_NO_DEFAULT, repr=False)
+    """The actual schema default, kept separate from the displayed example."""
+    value_source: Literal["default", "example", "enum"] | None = field(
+        default=None, repr=False
+    )
+    """Origin of `.value`; unset for settings constructed without schema metadata."""
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -193,9 +200,13 @@ def iter_settings(
                 yield Table(sub_table, name, description)
                 continue
             allowed = _enum_values(field_schema, schema)
-            value = _example_value({**resolved, **field_schema})
+            effective_schema = {**resolved, **field_schema}
+            default = effective_schema.get("default", _NO_DEFAULT)
+            value = _example_value(effective_schema)
+            value_source = "default" if value == default else "example"
             if value is None:
                 value = next((item for item in allowed if item is not None), None)
+                value_source = "enum"
             if value is None:
                 missing.append(".".join((*sub_table, name)))
                 continue
@@ -210,6 +221,8 @@ def iter_settings(
                     field_schema.get("examples", resolved.get("examples", []))
                 ),
                 allowed=allowed,
+                default=default,
+                value_source=value_source,
             )
     if strict and missing:
         msg = f"Settings without a default or example: {', '.join(missing)}"
@@ -374,6 +387,8 @@ def _iter_toml(
             yield "]\n", None
             table = setting.table
         first = False
+        if setting.default is None:
+            yield "# ", None
         yield _to_toml_key(setting.name), setting
         yield f" = {to_toml_value(setting.value)}\n", None
 
@@ -388,7 +403,10 @@ def _iter_yaml(
         yield indent, None
         if isinstance(child, Setting):
             yield _to_yaml_key(key), child
-            yield f": {to_yaml_value(child.value)}\n", None
+            yield (
+                f": {to_yaml_value(None if child.default is None else child.value)}\n",
+                None,
+            )
         else:
             yield _to_yaml_key(key), tables.get((*path, key))
             yield ":\n", None
@@ -409,7 +427,7 @@ def _iter_json(
         yield indent + "  ", None
         if isinstance(child, Setting):
             yield _to_json(key), child
-            yield f": {_to_json(child.value)}", None
+            yield f": {_to_json(None if child.default is None else child.value)}", None
         else:
             yield _to_json(key), tables.get((*path, key))
             yield ": ", None
@@ -633,6 +651,11 @@ def _entry_tooltip(entry: Entry) -> str:
     tooltip = to_tooltip(entry.description) if entry.description else ""
     if isinstance(entry, Table):
         return tooltip
+    if entry.default is not _NO_DEFAULT:
+        tooltip += f"<p>Default: {_code(entry.default)}</p>"
+    if entry.value_source in {"example", "enum"}:
+        origin = " (inferred from enum)" if entry.value_source == "enum" else ""
+        tooltip += f"<p>Example{origin}: {_code(entry.value)}</p>"
     if entry.allowed:
         tooltip += f"<p>Allowed values: {_code_list(entry.allowed)}</p>"
     examples = [e for e in entry.examples if e is not None and e != entry.value]

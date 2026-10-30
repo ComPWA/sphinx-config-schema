@@ -124,7 +124,12 @@ def test_nullable_enum_choices(tmp_path, keyword, referenced, default):
         ("yaml", yaml.safe_load),
         ("json", json.loads),
     ]:
-        assert load(render(settings, fmt)) == {"mode": setting.value}
+        source = render(settings, fmt)
+        if default is None and fmt == "toml":
+            assert source == '# mode = "a"'
+            assert load(source) == {}
+        else:
+            assert load(source) == {"mode": default}
     assert schema["properties"]["mode"]["default"] is default
 
 
@@ -158,3 +163,35 @@ def test_referenced_enum_without_default(tmp_path):
     assert setting.value == "a"
     assert setting.description == "Mode."
     assert setting.allowed == (None, "a", "b")
+
+
+@pytest.mark.parametrize("explicit_example", [False, True])
+def test_null_default_is_preserved_when_an_example_is_available(
+    tmp_path, explicit_example
+):
+    field = {"default": None, "enum": ["a", "b", None]}
+    if explicit_example:
+        field["examples"] = ["b"]
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps({"properties": {"mode": field}}))
+    settings = list(iter_settings(json.loads(path.read_text()), strict=True))
+    example = "b" if explicit_example else "a"
+    assert render(settings, "toml") == f'# mode = "{example}"'
+    assert tomllib.loads(render(settings, "toml")) == {}
+    assert yaml.safe_load(render(settings, "yaml")) == {"mode": None}
+    assert json.loads(render(settings, "json")) == {"mode": None}
+    block = create_literal_block(settings, "toml", rawsource="config-schema")
+    (reference,) = block.findall(nodes.reference)
+    assert reference["ids"] == ["mode"]
+    assert reference.astext() == "mode"
+
+
+def test_non_null_defaults_remain_active(tmp_path):
+    path = tmp_path / "schema.json"
+    path.write_text(
+        json.dumps({"properties": {"mode": {"default": "b", "enum": ["a", "b"]}}})
+    )
+    settings = list(iter_settings(json.loads(path.read_text())))
+    assert render(settings, "toml") == 'mode = "b"'
+    assert yaml.safe_load(render(settings, "yaml")) == {"mode": "b"}
+    assert json.loads(render(settings, "json")) == {"mode": "b"}
