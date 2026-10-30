@@ -121,10 +121,10 @@ def test_formats(tmp_path: Path, fmt: str, expected: str):
     assert code.get_text() == expected
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
     assert set(keys) == {
-        f"tool-example-{fmt}",
-        f"tool-example-output-{fmt}",
-        f"tool-example-server-{fmt}",
-        f"tool-example-server-port-{fmt}",
+        f"tool.example-{fmt}",
+        f"tool.example.output-{fmt}",
+        f"tool.example.server-{fmt}",
+        f"tool.example.server.port-{fmt}",
     }
 
 
@@ -132,10 +132,10 @@ def test_keys_are_anchors(html_dir: Path):
     soup = BeautifulSoup((html_dir / "index.html").read_text(), "html.parser")
     keys = {a["id"]: a.get_text() for a in soup.select("a.config-schema-key")}
     assert keys == {
-        "tool-example-toml": "example",
-        "tool-example-output-toml": "output",
-        "tool-example-server-toml": "server",
-        "tool-example-server-port-toml": "port",
+        "tool.example-toml": "example",
+        "tool.example.output-toml": "output",
+        "tool.example.server-toml": "server",
+        "tool.example.server.port-toml": "port",
     }
     code = soup.select_one(".highlight-toml pre")
     assert code is not None
@@ -151,9 +151,9 @@ def test_option_references(tmp_path: Path):
     app = _build(
         tmp_path,
         dedent("""
-            :ref:`Output <index:tool-example-output-toml>`
-            :ref:`Server <index:tool-example-server-toml>`
-            :ref:`JSON output <index:tool-example-output-json>`
+            :ref:`Output <index:tool.example.output-toml>`
+            :ref:`Server <index:tool.example.server-toml>`
+            :ref:`JSON output <index:tool.example.output-json>`
 
             .. config-schema:: example.schema.json
                :table: tool.example
@@ -166,9 +166,9 @@ def test_option_references(tmp_path: Path):
     assert not app.warning.getvalue()
     soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
     links = {a.get_text(): a["href"] for a in soup.select("a.reference.internal")}
-    assert links["Output"] == "#tool-example-output-toml"
-    assert links["Server"] == "#tool-example-server-toml"
-    assert links["JSON output"] == "#tool-example-output-json"
+    assert links["Output"] == "#tool.example.output-toml"
+    assert links["Server"] == "#tool.example.server-toml"
+    assert links["JSON output"] == "#tool.example.output-json"
 
 
 @pytest.mark.parametrize("fmt", ["toml", "yaml", "json"])
@@ -191,8 +191,8 @@ def test_named_example(tmp_path: Path, fmt: str):
                 ==========
 
                 :ref:`Example <settings>`
-                :ref:`Output <settings-tool-example-output>`
-                :ref:`Server <settings-tool-example-server>`
+                :ref:`Output <settings.tool.example.output>`
+                :ref:`Server <settings.tool.example.server>`
             """),
         },
     )
@@ -200,8 +200,8 @@ def test_named_example(tmp_path: Path, fmt: str):
     soup = BeautifulSoup((app.outdir / "references.html").read_text(), "html.parser")
     links = {a.get_text(): a["href"] for a in soup.select("a.reference.internal")}
     assert links["Example"] == "index.html#settings"
-    assert links["Output"] == "index.html#settings-tool-example-output"
-    assert links["Server"] == "index.html#settings-tool-example-server"
+    assert links["Output"] == "index.html#settings.tool.example.output"
+    assert links["Server"] == "index.html#settings.tool.example.server"
 
 
 def test_duplicate_example_name(tmp_path: Path):
@@ -215,7 +215,7 @@ def test_duplicate_example_name(tmp_path: Path):
 def test_tooltips(html_dir: Path):
     (tips_file,) = (html_dir / "_static" / "tippy").glob("index.*.js")
     tips = tips_file.read_text()
-    assert '"a[href=\\"#tool-example-output-toml\\"]"' in tips
+    assert '"a[href=\\"#tool.example.output-toml\\"]"' in tips
     assert "Output <code>directory</code>." in tips
     assert "Server settings." in tips
     assert "Example settings." in tips
@@ -230,7 +230,7 @@ def test_tooltips(html_dir: Path):
         (
             "latex",
             "projectnamenotset.tex",  # cspell:ignore projectnamenotset
-            r"\label{\detokenize{index:tool-example-server-port-toml}}",
+            r"\label{\detokenize{index:tool.example.server.port-toml}}",
         ),
     ],
 )
@@ -264,8 +264,8 @@ def test_latex_code_block(tmp_path: Path):
     assert r"\begin{sphinxVerbatim}[commandchars=\\\{\}]" in tex
     assert "sphinxalltt" not in tex
     assert (
-        r"\phantomsection\label{\detokenize{index:tool-example-server-port-toml}}"
-        r"{\hyperref[\detokenize{index:tool-example-server-port-toml}]"
+        r"\phantomsection\label{\detokenize{index:tool.example.server.port-toml}}"
+        r"{\hyperref[\detokenize{index:tool.example.server.port-toml}]"
         r"{\sphinxsamedocref{\PYG{n}{port}}}}"
     ) in tex
 
