@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from textwrap import dedent
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -52,38 +53,63 @@ def _build(
 def html_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     app = _build(
         tmp_path_factory.mktemp("build"),
-        ".. config-schema:: example.schema.json\n"
-        "   :caption: pyproject.toml\n"
-        "   :table: tool.example\n",
+        dedent("""
+            .. config-schema:: example.schema.json
+               :caption: pyproject.toml
+               :table: tool.example
+        """),
     )
     assert not app.warning.getvalue()
     return app.outdir
 
 
 def test_strict(tmp_path: Path):
-    app = _build(tmp_path, ".. config-schema:: example.schema.json\n   :strict:\n")
+    app = _build(
+        tmp_path,
+        dedent("""
+            .. config-schema:: example.schema.json
+               :strict:
+        """),
+    )
     assert "Settings without a default or example: missing" in app.warning.getvalue()
 
 
 @pytest.mark.parametrize(
     ("fmt", "expected"),
     [
-        ("yaml", "tool:\n  example:\n    output: build\n    server:\n      port: 8080"),
+        (
+            "yaml",
+            dedent("""\
+                tool:
+                  example:
+                    output: build
+                    server:
+                      port: 8080"""),
+        ),
         (
             "json",
-            (
-                '{\n  "tool": {\n    "example": {\n      "output": "build",\n'
-                '      "server": {\n        "port": 8080\n      }\n    }\n  }\n}'
-            ),
+            dedent("""\
+                {
+                  "tool": {
+                    "example": {
+                      "output": "build",
+                      "server": {
+                        "port": 8080
+                      }
+                    }
+                  }
+                }"""),
         ),
     ],
 )
 def test_formats(tmp_path: Path, fmt: str, expected: str):
     app = _build(
         tmp_path,
-        ".. config-schema:: example.schema.json\n"
-        "   :table: tool.example\n"
-        f"   :format: {fmt}\n",
+        dedent(f"""
+            .. config-schema:: example.schema.json
+               :table: tool.example
+               :format: {fmt}
+        """),
     )
     assert not app.warning.getvalue()
     soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
@@ -110,9 +136,12 @@ def test_keys_are_anchors(html_dir: Path):
     }
     code = soup.select_one(".highlight-toml pre")
     assert code is not None
-    assert code.get_text() == (
-        '[tool.example]\noutput = "build"\n\n[tool.example.server]\nport = 8080'
-    )
+    assert code.get_text() == dedent("""\
+        [tool.example]
+        output = "build"
+
+        [tool.example.server]
+        port = 8080""")
 
 
 def test_tooltips(html_dir: Path):
@@ -140,7 +169,10 @@ def test_tooltips(html_dir: Path):
 def test_other_builders(tmp_path: Path, builder: str, output: str, expected: str):
     app = _build(
         tmp_path,
-        ".. config-schema:: example.schema.json\n   :table: tool.example\n",
+        dedent("""
+            .. config-schema:: example.schema.json
+               :table: tool.example
+        """),
         builder=builder,
     )
     assert not app.warning.getvalue()
@@ -148,7 +180,10 @@ def test_other_builders(tmp_path: Path, builder: str, output: str, expected: str
 
 
 def test_duplicate_anchors_get_suffix(tmp_path: Path):
-    directive = ".. config-schema:: example.schema.json\n   :format: {}\n\n"
+    directive = dedent("""
+        .. config-schema:: example.schema.json
+           :format: {}
+    """)
     app = _build(
         tmp_path, "".join(directive.format(f) for f in ("yaml", "yaml", "json"))
     )
@@ -171,7 +206,12 @@ def test_nullable_enum_tooltip(tmp_path: Path, keyword: str):
         },
     }
     app = _build(
-        tmp_path, ".. config-schema:: example.schema.json\n   :strict:\n", schema=schema
+        tmp_path,
+        dedent("""
+            .. config-schema:: example.schema.json
+               :strict:
+        """),
+        schema=schema,
     )
     assert not app.warning.getvalue()
     soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
