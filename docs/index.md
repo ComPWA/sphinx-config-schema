@@ -133,7 +133,7 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 :::::
 
-The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above. The standard {rst:role}`ref` role accepts the same labels, but needs an explicit title and renders it as plain text.
+The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above. The standard {rst:role}`ref` role accepts the same labels, but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`, written as ``{ref}`the output option <index:tool.example.output-toml>` ``.
 
 Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead. The YAML tab above does this with `:name: settings`, so its {config-schema:option}`settings.output` option is referenced with:
 

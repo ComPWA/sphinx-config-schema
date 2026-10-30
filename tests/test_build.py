@@ -327,7 +327,7 @@ def test_nullable_enum_tooltip(tmp_path: Path, keyword: str):
 def test_option_role(tmp_path: Path):
     app = _build(
         tmp_path,
-        dedent("""
+        directive=dedent("""
             :config-schema:option:`index:tool.example.output-toml`
             :config-schema:option:`Server <index:tool.example.server-toml>`
             :config-schema:option:`index:tool.example.missing`
