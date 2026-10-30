@@ -88,6 +88,7 @@ myst_enable_extensions = [
     "colon_fence",
     "substitution",
 ]
+myst_heading_anchors = 3
 myst_substitutions = {
     "example_schema": (
         f"[example schema](https://github.com/{ORGANIZATION}/{REPO_NAME}/blob/{REVISION}/docs/example.schema.json)"

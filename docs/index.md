@@ -77,6 +77,7 @@ The {rst:dir}`format <config-schema:format>` option renders the example as `yaml
 ```{config-schema} example.schema.json
 :caption: config.yaml
 :format: yaml
+:name: settings
 ```
 
 :::
@@ -102,13 +103,65 @@ The schema controls how the configuration is rendered:
 
 - Each key has a tooltip containing its `description`, its actual default, the displayed example when it differs from the default, allowed enum values, and any remaining examples. Examples inferred from enum choices are labelled as such. Double backticks in descriptions render as inline code. The tooltip of the last component of the {rst:dir}`table <config-schema:table>` path shows the schema's top-level `description`.
 
-- Each key also links to itself and can be referenced with the standard {rst:role}`ref` role. Unnamed examples use document-qualified labels with a format suffix, such as ``{ref}`output <index:tool-example-output-toml>` `` in MyST or ``:ref:`output <index:tool-example-output-toml>` `` in reST. The links above resolve to {ref}`output <index:tool-example-output-toml>` in TOML, {ref}`output <index:output-yaml>` in YAML, and {ref}`output <index:output-json>` in JSON. Repeated examples with the same format receive numeric suffixes, such as `output-yaml-2`. Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead, for instance `:name: settings` makes its `output` option available as ``{ref}`output <settings-output>` ``. The full {rst:dir}`table <config-schema:table>` path remains part of each option anchor.
+- Each key links to itself and can be [referenced](#referencing-options).
 
 The example is built from regular docutils nodes, so it also appears in other output formats, such as LaTeX and plain text. There, each key becomes a label that can be referenced.
 
+### Referencing options
+
+Use the standard {rst:role}`ref` role to link to an option. Unnamed examples use labels qualified by the document name and the format:
+
+:::::{tab-set}
+
+::::{tab-item} MyST
+:sync: myst
+
+```md
+{ref}`output <index:tool-example-output-toml>`
+```
+
+::::
+
+::::{tab-item} reST
+:sync: rst
+
+```rst
+:ref:`output <index:tool-example-output-toml>`
+```
+
+::::
+
+:::::
+
+The full {rst:dir}`table <config-schema:table>` path remains part of each label. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {ref}`output <index:tool-example-output-toml>` in the TOML tab and {ref}`output <index:output-json>` in the JSON tab above.
+
+Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead. The YAML tab above does this with `:name: settings`, so its `output` option resolves to {ref}`output <settings-output>` with:
+
+:::::{tab-set}
+
+::::{tab-item} MyST
+:sync: myst
+
+```md
+{ref}`output <settings-output>`
+```
+
+::::
+
+::::{tab-item} reST
+:sync: rst
+
+```rst
+:ref:`output <settings-output>`
+```
+
+::::
+
+:::::
+
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
-## Reference
+## Directive reference
 
 ````{rst:directive} .. config-schema:: path
 Render the JSON schema at `path` as a configuration example. The path is relative to the current document or, with a leading `/`, to the documentation source directory.
