@@ -102,7 +102,7 @@ The schema controls how the configuration is rendered:
 
 - Each key has a tooltip containing its `description`, its actual default, the displayed example when it differs from the default, allowed enum values, and any remaining examples. Examples inferred from enum choices are labelled as such. Double backticks in descriptions render as inline code. The tooltip of the last component of the {rst:dir}`table <config-schema:table>` path shows the schema's top-level `description`.
 
-- Each key also links to itself. When a key appears more than once on a page, as in the format tabs above, later anchors receive a format suffix, such as `#tool-example-output-yaml`.
+- Each key also links to itself and is registered as a Sphinx label. Use the standard {rst:role}`ref` role to reference an option, for example, ``{ref}`output <tool-example-output>` `` in MyST or ``:ref:`output <tool-example-output>` `` in reST. You can also append its anchor to the page URL. For example, the `output` option above can be referenced with {ref}`output <tool-example-output>` in TOML, {ref}`output <output>` in YAML, and {ref}`output <output-json>` in JSON. The {rst:dir}`table <config-schema:table>` path becomes part of the anchor. When a key appears more than once on a page, later anchors receive a format suffix to keep their permalinks unique.
 
 The example is built from regular docutils nodes, so it also appears in other output formats, such as LaTeX and plain text. There, each key becomes a label that can be referenced.
 

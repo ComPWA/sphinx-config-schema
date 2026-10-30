@@ -144,6 +144,30 @@ def test_keys_are_anchors(html_dir: Path):
         port = 8080""")
 
 
+def test_option_references(tmp_path: Path):
+    app = _build(
+        tmp_path,
+        dedent("""
+            :ref:`Output <tool-example-output>`
+            :ref:`Server <tool-example-server>`
+            :ref:`JSON output <tool-example-output-json>`
+
+            .. config-schema:: example.schema.json
+               :table: tool.example
+
+            .. config-schema:: example.schema.json
+               :table: tool.example
+               :format: json
+        """),
+    )
+    assert not app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    links = {a.get_text(): a["href"] for a in soup.select("a.reference.internal")}
+    assert links["Output"] == "#tool-example-output"
+    assert links["Server"] == "#tool-example-server"
+    assert links["JSON output"] == "#tool-example-output-json"
+
+
 def test_tooltips(html_dir: Path):
     (tips_file,) = (html_dir / "_static" / "tippy").glob("index.*.js")
     tips = tips_file.read_text()

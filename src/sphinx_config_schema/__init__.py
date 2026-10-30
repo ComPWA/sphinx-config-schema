@@ -125,6 +125,9 @@ class ConfigSchemaDirective(SphinxDirective):
             f"#{s.anchor}": tip for s in settings if (tip := _entry_tooltip(s))
         })
         example: nodes.Node = create_literal_block(settings, fmt, rawsource=self.name)
+        for key in example.findall(nodes.reference):
+            key["names"].append(key["ids"][0])
+            self.state.document.note_explicit_target(key)
         self.set_source_info(example)
         caption = self.options.get("caption")
         if caption is not None:
