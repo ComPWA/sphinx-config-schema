@@ -86,7 +86,13 @@ intersphinx_mapping = {
 }
 myst_enable_extensions = [
     "colon_fence",
+    "substitution",
 ]
+myst_substitutions = {
+    "example_schema": (
+        f"[example schema](https://github.com/{ORGANIZATION}/{REPO_NAME}/blob/{REVISION}/docs/example.schema.json)"
+    ),
+}
 nitpick_ignore = [
     ("py:class", "docutils.nodes.Element"),
     ("py:class", "docutils.nodes.Node"),

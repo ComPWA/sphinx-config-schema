@@ -59,7 +59,7 @@ The {rst:dir}`config-schema` directive takes the path to a JSON schema file, rel
 
 :::::
 
-The {rst:dir}`format <config-schema:format>` option renders the example as `yaml` or `json` instead of the default `toml`. Settings are then nested by indentation instead of grouped under table headers. The tabs below show the same schema in each format. Hover over a key to see what it does:
+The {rst:dir}`format <config-schema:format>` option renders the example as `yaml` or `json` instead of the default `toml`. Settings are then nested by indentation instead of grouped under table headers. The tabs below show the same {{ example_schema }} in each format. Hover over a key to see what it does:
 
 ::::{tab-set}
 
