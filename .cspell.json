@@ -34,10 +34,12 @@
   ],
   "ignoreWords": [
     "compwa",
+    "latexmk",
     "prereleased",
     "pydantic",
     "pypa",
     "pypi",
+    "texlive",
     "toctree"
   ],
   "language": "en-US",

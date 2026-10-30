@@ -247,6 +247,29 @@ def test_other_builders(tmp_path: Path, builder: str, output: str, expected: str
     assert expected in (app.outdir / output).read_text()
 
 
+def test_latex_code_block(tmp_path: Path):
+    app = _build(
+        tmp_path,
+        dedent("""
+            .. config-schema:: example.schema.json
+               :caption: pyproject.toml
+               :table: tool.example
+        """),
+        builder="latex",
+    )
+    assert not app.warning.getvalue()
+    # cspell:ignore commandchars hyperref phantomsection sphinxalltt sphinxsamedocref
+    tex = (app.outdir / "projectnamenotset.tex").read_text()
+    assert r"\sphinxSetupCaptionForVerbatim{pyproject.toml}" in tex
+    assert r"\begin{sphinxVerbatim}[commandchars=\\\{\}]" in tex
+    assert "sphinxalltt" not in tex
+    assert (
+        r"\phantomsection\label{\detokenize{index:tool-example-server-port-toml}}"
+        r"{\hyperref[\detokenize{index:tool-example-server-port-toml}]"
+        r"{\sphinxsamedocref{\PYG{n}{port}}}}"
+    ) in tex
+
+
 @pytest.mark.parametrize(
     "schema", [None, {"properties": {"output": {"default": "build"}}}]
 )
