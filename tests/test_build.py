@@ -257,7 +257,7 @@ def test_duplicate_anchors_get_suffix(tmp_path: Path, schema):
     """)
     app = _build(
         tmp_path,
-        "".join(directive.format(f) for f in ("yaml", "yaml", "json")),
+        directive="".join(directive.format(f) for f in ("yaml", "yaml", "json")),
         schema=schema,
     )
     assert not app.warning.getvalue()
