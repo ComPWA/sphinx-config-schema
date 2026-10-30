@@ -65,9 +65,7 @@ class Setting:
 
     @property
     def anchor(self) -> str:
-        return nodes.make_id(
-            self.anchor_prefix + ".".join(self.path) + self.anchor_suffix
-        )
+        return _make_anchor(self.anchor_prefix, self.path, self.anchor_suffix)
 
 
 @dataclass(frozen=True)
@@ -86,13 +84,23 @@ class Table:
 
     @property
     def anchor(self) -> str:
-        return nodes.make_id(
-            self.anchor_prefix + ".".join(self.path) + self.anchor_suffix
-        )
+        return _make_anchor(self.anchor_prefix, self.path, self.anchor_suffix)
 
 
 Entry = Setting | Table
 """A key in the generated example."""
+
+
+def _make_anchor(prefix: str, path: tuple[str, ...], suffix: str) -> str:
+    """Join the path components with dots, so that the hierarchy stays recognizable.
+
+    >>> _make_anchor("settings", ("tool", "log_level"), "")
+    'settings.tool.log-level'
+    >>> _make_anchor("", ("tool", "port"), "-yaml-2")
+    'tool.port-yaml-2'
+    """
+    components = (prefix, *path) if prefix else path
+    return ".".join(nodes.make_id(c) for c in components) + suffix
 
 
 class ConfigSchemaDirective(SphinxDirective):
@@ -133,7 +141,7 @@ class ConfigSchemaDirective(SphinxDirective):
         used = set(self.state.document.ids)
         settings = [
             _make_unique(
-                replace(s, anchor_prefix=f"{name}." if name else ""),
+                replace(s, anchor_prefix=name or ""),
                 "" if name else fmt,
                 used,
             )
@@ -175,8 +183,8 @@ def _make_unique(setting: Entry, fmt: str, used: set[str]) -> Entry:
     >>> _make_unique(Setting((), "port", 80, ""), "yaml", used).anchor
     'port-yaml-2'
     """
-    base = f".{fmt}" if fmt else ""
-    suffixes = itertools.chain((base,), (f"{base}.{i}" for i in itertools.count(2)))
+    base = f"-{fmt}" if fmt else ""
+    suffixes = itertools.chain((base,), (f"{base}-{i}" for i in itertools.count(2)))
     candidates = (replace(setting, anchor_suffix=s) for s in suffixes)
     result = next(c for c in candidates if c.anchor not in used)
     used.add(result.anchor)

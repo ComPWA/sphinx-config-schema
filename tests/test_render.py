@@ -77,7 +77,7 @@ def test_keys_become_anchors(fmt: str, key: str):
     settings = [Setting(("tool", "demo"), "web.example.edu", "x", "")]
     block = create_literal_block(settings, fmt, rawsource="config-schema")
     (reference,) = block.findall(nodes.reference)
-    assert reference["ids"] == ["tool-demo-web-example-edu"]
+    assert reference["ids"] == ["tool.demo.web-example-edu"]
     assert reference.astext() == key  # cspell:ignore astext
     assert block.astext() == render(settings, fmt)
 
