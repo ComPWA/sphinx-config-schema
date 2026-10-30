@@ -217,10 +217,12 @@ def test_nullable_enum_tooltip(tmp_path: Path, keyword: str):
     soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
     code = soup.select_one(".highlight-toml pre")
     assert code is not None
-    assert code.get_text() == 'mode = "a"'
+    assert code.get_text() == '# mode = "a"'
     (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
     tips = tips_file.read_text()
     assert "Choose a mode." in tips
+    assert "Default: <code>null</code>" in tips
+    assert "Example (inferred from enum):" in tips
     assert "Allowed values:" in tips
     assert "&quot;a&quot;" in tips
     assert "&quot;b&quot;" in tips
