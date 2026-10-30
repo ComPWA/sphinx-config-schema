@@ -3,6 +3,11 @@
 :::{title} Welcome
 :::
 
+[![PyPI package](https://img.shields.io/pypi/v/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
+[![CI status](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml?query=branch%3Amain)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 `sphinx-config-schema` is a [Sphinx](https://www.sphinx-doc.org) extension that renders a [JSON schema](https://json-schema.org) as a copyable TOML, YAML, or JSON example. Each key in the example shows the description of that setting as a tooltip, via [`sphinx-tippy`](https://github.com/sphinx-extensions2/sphinx-tippy), and links to itself so that it can be shared as a permalink.
 
 This is useful for tools that read their configuration from a file, such as a `[tool.*]` table in `pyproject.toml`, and that generate a JSON schema for it, for instance for editor completion.
