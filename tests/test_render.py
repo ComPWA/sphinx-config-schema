@@ -91,3 +91,70 @@ def test_unsupported_value(fmt: str):
 def test_unknown_format():
     with pytest.raises(ValueError, match="Unknown format"):
         render([], "ini")
+
+
+@pytest.mark.parametrize("keyword", ["anyOf", "oneOf"])
+@pytest.mark.parametrize("referenced", [False, True], ids=["inline", "reference"])
+@pytest.mark.parametrize("default", [None, "b"])
+def test_nullable_enum_choices(tmp_path, keyword, referenced, default):
+    enum = {"enum": ["a", "b"], "type": "string"}
+    schema = {
+        "$defs": {"Mode": enum},
+        "properties": {
+            "mode": {
+                keyword: [
+                    {"type": "null"},
+                    {"$ref": "#/$defs/Mode"} if referenced else enum,
+                ],
+                "default": default,
+                "description": "Choose a mode.",
+            }
+        },
+    }
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema))
+    settings = list(iter_settings(json.loads(path.read_text()), strict=True))
+    (setting,) = settings
+    assert isinstance(setting, Setting)
+    assert setting.value == ("a" if default is None else default)
+    assert setting.allowed == (None, "a", "b")
+    assert setting.description == "Choose a mode."
+    for fmt, load in [
+        ("toml", tomllib.loads),
+        ("yaml", yaml.safe_load),
+        ("json", json.loads),
+    ]:
+        assert load(render(settings, fmt)) == {"mode": setting.value}
+    assert schema["properties"]["mode"]["default"] is default
+
+
+@pytest.mark.parametrize("example", ["b", False, 0])
+def test_explicit_examples_take_precedence_over_enum(tmp_path, example):
+    schema = {
+        "properties": {
+            "mode": {
+                "default": None,
+                "enum": ["a", "b", False, 0],
+                "examples": [example],
+            }
+        }
+    }
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema))
+    (setting,) = iter_settings(json.loads(path.read_text()))
+    assert isinstance(setting, Setting)
+    assert setting.value == example
+
+
+def test_referenced_enum_without_default(tmp_path):
+    schema = {
+        "$defs": {"Mode": {"enum": [None, "a", "b"], "description": "Mode."}},
+        "properties": {"mode": {"$ref": "#/$defs/Mode"}},
+    }
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema))
+    (setting,) = iter_settings(json.loads(path.read_text()), strict=True)
+    assert isinstance(setting, Setting)
+    assert setting.value == "a"
+    assert setting.description == "Mode."
+    assert setting.allowed == (None, "a", "b")

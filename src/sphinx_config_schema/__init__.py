@@ -192,7 +192,10 @@ def iter_settings(
                 )
                 yield Table(sub_table, name, description)
                 continue
-            value = _example_value(field_schema)
+            allowed = _enum_values(field_schema, schema)
+            value = _example_value({**resolved, **field_schema})
+            if value is None:
+                value = next((item for item in allowed if item is not None), None)
             if value is None:
                 missing.append(".".join((*sub_table, name)))
                 continue
@@ -200,13 +203,51 @@ def iter_settings(
                 sub_table,
                 name,
                 value,
-                description=field_schema.get("description", ""),
-                examples=tuple(field_schema.get("examples", [])),
-                allowed=tuple(field_schema.get("enum") or resolved.get("enum", [])),
+                description=field_schema.get(
+                    "description", resolved.get("description", "")
+                ),
+                examples=tuple(
+                    field_schema.get("examples", resolved.get("examples", []))
+                ),
+                allowed=allowed,
             )
     if strict and missing:
         msg = f"Settings without a default or example: {', '.join(missing)}"
         raise ValueError(msg)
+
+
+def _enum_values(
+    field_schema: dict[str, Any],
+    schema: dict[str, Any],
+    seen: frozenset[int] = frozenset(),
+) -> tuple[Any, ...]:
+    """Collect enum choices from alternatives and local references without following cycles.
+
+    >>> schema = {"$defs": {"Mode": {"enum": ["a", "b"]}}}
+    >>> _enum_values({"anyOf": [{"$ref": "#/$defs/Mode"}, {"type": "null"}]}, schema)
+    ('a', 'b', None)
+    >>> _enum_values({"oneOf": [{"enum": ["a", "b"]}, {"enum": ["c"]}]}, {})
+    ('a', 'b', 'c')
+    >>> recursive = {"$defs": {"Mode": {"$ref": "#/$defs/Mode"}}}
+    >>> _enum_values({"$ref": "#/$defs/Mode"}, recursive)
+    ()
+    """
+    if id(field_schema) in seen:
+        return ()
+    seen |= {id(field_schema)}
+    if "enum" in field_schema:
+        return tuple(field_schema["enum"])
+    resolved = _resolve_ref(field_schema, schema)
+    if resolved is not field_schema:
+        return _enum_values(resolved, schema, seen)
+    if field_schema.get("type") == "null":
+        return (None,)
+    values: list[Any] = []
+    for alternative in field_schema.get("anyOf", field_schema.get("oneOf", [])):
+        for value in _enum_values(alternative, schema, seen):
+            if value not in values:
+                values.append(value)
+    return tuple(values)
 
 
 def _example_value(field_schema: dict[str, Any]) -> Any:

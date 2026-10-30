@@ -92,7 +92,7 @@ The {rst:dir}`format <config-schema:format>` option renders the example as `yaml
 
 ::::
 
-Each setting shows its `default` or, if it has none, its first entry in `examples`. An empty list or table counts as no default, because it is usually a placeholder. Settings with neither are left out, or reported as an error with the {rst:dir}`strict <config-schema:strict>` flag, which helps to keep a schema complete. Objects with their own `properties` become nested tables, also when they are a local `$ref` such as the ones that [pydantic](https://docs.pydantic.dev) generates.
+Each setting shows its `default` or, if it has none, its first entry in `examples` or `enum`. An empty list or table counts as no default, because it is usually a placeholder. Settings with none of these are left out, or reported as an error with the {rst:dir}`strict <config-schema:strict>` flag, which helps to keep a schema complete. Objects with their own `properties` become nested tables, also when they are a local `$ref` such as the ones that [pydantic](https://docs.pydantic.dev) generates.
 
 The tooltip of a key shows the `description` of the setting, or of the schema itself for the last part of the {rst:dir}`table <config-schema:table>`, with ` ``code`` ` rendered as code, followed by its allowed values if it has an `enum` and any examples that the code block does not show. When the same key appears more than once on a page, as in the tabs above, the later anchors get the format as a suffix, such as `#tool-example-output-yaml`, so that each permalink stays unique.
 
@@ -120,7 +120,7 @@ Serialization format of the example.
 ```{rst:directive:option} strict
 :type: flag
 
-Report settings that have neither a `default` nor `examples` as an error instead of leaving them out.
+Report settings that have no `default`, `examples`, or `enum` as an error instead of leaving them out.
 ```
 
 ```{rst:directive:option} table: dotted.path

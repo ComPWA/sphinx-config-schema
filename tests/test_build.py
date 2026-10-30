@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from bs4 import BeautifulSoup
@@ -26,11 +26,19 @@ SCHEMA = {
 }
 
 
-def _build(tmp_path: Path, directive: str, builder: str = "html") -> SphinxTestApp:
+def _build(
+    tmp_path: Path,
+    directive: str,
+    builder: str = "html",
+    *,
+    schema: dict[str, Any] | None = None,
+) -> SphinxTestApp:
     src = tmp_path / "src"
     src.mkdir()
     (src / "conf.py").write_text('extensions = ["sphinx_config_schema"]\n')
-    (src / "example.schema.json").write_text(json.dumps(SCHEMA))
+    (src / "example.schema.json").write_text(
+        json.dumps(SCHEMA if schema is None else schema)
+    )
     (src / "index.rst").write_text(f"Example\n=======\n\n{directive}")
     app = SphinxTestApp(builder, srcdir=src, builddir=tmp_path / "build")
     try:
@@ -148,3 +156,31 @@ def test_duplicate_anchors_get_suffix(tmp_path: Path):
     soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
     ids = [a["id"] for a in soup.select("a.config-schema-key") if "output" in a["id"]]
     assert ids == ["output", "output-yaml", "output-json"]
+
+
+@pytest.mark.parametrize("keyword", ["anyOf", "oneOf"])
+def test_nullable_enum_tooltip(tmp_path: Path, keyword: str):
+    schema = {
+        "$defs": {"Mode": {"enum": ["a", "b"]}},
+        "properties": {
+            "mode": {
+                keyword: [{"$ref": "#/$defs/Mode"}, {"type": "null"}],
+                "default": None,
+                "description": "Choose a mode.",
+            }
+        },
+    }
+    app = _build(
+        tmp_path, ".. config-schema:: example.schema.json\n   :strict:\n", schema=schema
+    )
+    assert not app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    code = soup.select_one(".highlight-toml pre")
+    assert code is not None
+    assert code.get_text() == 'mode = "a"'
+    (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
+    tips = tips_file.read_text()
+    assert "Choose a mode." in tips
+    assert "Allowed values:" in tips
+    assert "&quot;a&quot;" in tips
+    assert "&quot;b&quot;" in tips
