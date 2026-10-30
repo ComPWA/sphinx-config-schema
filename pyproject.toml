@@ -81,6 +81,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.compwa.policy]
+doc-apt-packages = "latexmk texlive-latex-extra"
 repo-name = "sphinx-config-schema"
 repo-title = "sphinx-config-schema"
 
@@ -130,6 +131,10 @@ type = "uv"
 heading = "Documentation"
 
 [tool.poe.groups.doc.tasks.doc]
+help = "Build the HTML documentation with the PDF version embedded"
+sequence = ["pdf", "html"]
+
+[tool.poe.groups.doc.tasks.html]
 cmd = """
 sphinx-build \
     --builder=html \
@@ -140,7 +145,23 @@ sphinx-build \
     docs/_build/html/
 """
 executor = { group = "doc" }
-help = "Build the HTML documentation"
+help = "Build only the HTML documentation"
+
+[tool.poe.groups.doc.tasks.pdf]
+executor = { group = "doc" }
+help = "Build the PDF documentation (requires latexmk and a TeX distribution)"
+shell = """
+sphinx-build \
+    --builder=latex \
+    --fail-on-warning \
+    --keep-going \
+    --show-traceback \
+    docs/ \
+    docs/_build/latex/
+make -C docs/_build/latex/ LATEXMKOPTS=-silent
+mkdir -p docs/_build/pdf/
+cp docs/_build/latex/*.pdf docs/_build/pdf/
+"""
 
 [tool.poe.groups.doc.tasks.doclive]
 cmd = """

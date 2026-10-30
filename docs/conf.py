@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sphinx_api_relink.helpers import (
     get_branch_name,
     get_git_revision,
@@ -9,11 +11,13 @@ REVISION = get_git_revision()
 ORGANIZATION = "ComPWA"
 REPO_NAME = "sphinx-config-schema"
 PACKAGE_NAME = REPO_NAME.replace("-", "_")
+PDF_PATH = Path(f"_build/pdf/{REPO_NAME}.pdf")  # built by `poe pdf`
 
 add_module_names = False
 api_github_repo = f"{ORGANIZATION}/{REPO_NAME}"
 api_linkcode_rev = REVISION
 api_target_substitutions = {"Sphinx": "sphinx.application.Sphinx"}
+author = "Common Partial-Wave Analysis"
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
@@ -42,6 +46,7 @@ html_context = {
     "github_version": BRANCH,
     "github_view_rev": REVISION,
 }
+html_extra_path = [str(PDF_PATH)] if PDF_PATH.exists() else []
 html_favicon = "_static/favicon.ico"
 html_last_updated_fmt = "%-d %B %Y"
 html_logo = (
@@ -80,7 +85,11 @@ html_theme_options = {
     "use_edit_page_button": True,
 }
 html_title = REPO_NAME
+latex_domain_indices = False
+latex_elements = {"printindex": ""}
+latex_theme = "howto"
 intersphinx_mapping = {
+    "docutils": ("https://sphinx-docutils.readthedocs.io/en/latest", None),
     "python": ("https://docs.python.org/3", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
 }
@@ -90,13 +99,17 @@ myst_enable_extensions = [
 ]
 myst_heading_anchors = 3
 myst_substitutions = {
+    "pdf_download": (
+        f'<a href="{PDF_PATH.name}">This documentation is also available as PDF</a>, built with the LaTeX builder.'
+        if PDF_PATH.exists()
+        else ""
+    ),
     "example_schema": (
         f"[example schema](https://github.com/{ORGANIZATION}/{REPO_NAME}/blob/{REVISION}/docs/example.schema.json)"
     ),
 }
 nitpick_ignore = [
-    ("py:class", "docutils.nodes.Element"),
-    ("py:class", "docutils.nodes.Node"),
+    ("py:class", "LaTeXTranslator"),
 ]
 nitpicky = True
 project = REPO_NAME

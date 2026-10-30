@@ -3,10 +3,12 @@
 :::{title} Welcome
 :::
 
+::::{only} html
 [![PyPI package](https://img.shields.io/pypi/v/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
 [![CI status](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml?query=branch%3Amain)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+::::
 
 `sphinx-config-schema` is a [Sphinx](https://www.sphinx-doc.org) extension that renders a [JSON schema](https://json-schema.org) as a copyable TOML, YAML, or JSON example. Each key in the example shows the description of that setting as a tooltip, via [`sphinx-tippy`](https://github.com/sphinx-extensions2/sphinx-tippy), and links to itself so that it can be shared as a permalink.
 
@@ -105,8 +107,6 @@ The schema controls how the configuration is rendered:
 
 - Each key links to itself and can be [referenced](#referencing-options).
 
-The example is built from regular docutils nodes, so it also appears in other output formats, such as LaTeX and plain text. There, each key becomes a label that can be referenced.
-
 ### Referencing options
 
 Use the standard {rst:role}`ref` role to link to an option. Unnamed examples use labels qualified by the document name and the format:
@@ -160,6 +160,14 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 :::::
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
+
+### Other output formats
+
+The example is built from regular docutils nodes, so it also appears in other output formats, such as plain text and LaTeX. There, each key becomes a label that can be referenced. In LaTeX output, the example is a highlighted code block with its caption, like any other code block.
+
+::::{only} html
+{{ pdf_download }}
+::::
 
 ## Directive reference
 

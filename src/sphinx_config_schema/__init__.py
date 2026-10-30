@@ -1,6 +1,6 @@
 """Render a JSON schema as a copyable TOML, YAML, or JSON example in Sphinx."""
 
-# cspell:ignore astext docname docnames doctree ensurenl refid relfn stripnl templatename
+# cspell:ignore astext commandchars curfilestack docname docnames doctree ensurenl hypertarget refid relfn sphinxalltt sphinxsamedocref stripnl templatename
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 from docutils import nodes
 from docutils.parsers.rst import directives
+from pygments.formatters.latex import escape_tex
 from pygments.lexers import get_lexer_by_name
 from pygments.token import STANDARD_TYPES
 from sphinx.directives.code import container_wrapper
@@ -29,6 +30,7 @@ if TYPE_CHECKING:
     from pygments.token import _TokenType
     from sphinx.application import Sphinx
     from sphinx.environment import BuildEnvironment
+    from sphinx.writers.latex import LaTeXTranslator
 
 CSS_CLASS = "config-schema-key"
 STATIC_DIR = Path(__file__).parent / "_static"
@@ -574,7 +576,7 @@ def create_literal_block(
     """
     fragments = list(iter_fragments(settings, fmt))
     tokens = _highlight("".join(text for text, _ in fragments), fmt)
-    block = nodes.literal_block(rawsource, "")
+    block = example_block(rawsource, "")
     for text, setting in fragments:
         inlines = _take(tokens, len(text))
         if setting is None:
@@ -590,6 +592,67 @@ def create_literal_block(
         )
     highlight = nodes.container("", block, classes=["highlight"])
     return nodes.container("", highlight, classes=[f"highlight-{fmt}", "notranslate"])
+
+
+class example_block(nodes.literal_block):  # ruff: ignore[invalid-class-name]
+    """Literal block of an example, which LaTeX renders as a highlighted code block.
+
+    Other builders handle it as the parsed literal that it is otherwise.
+    """
+
+
+def visit_example_block_latex(self: LaTeXTranslator, node: example_block) -> None:
+    r"""Write the example as a ``sphinxVerbatim`` block with Pygments macros.
+
+    The LaTeX writer renders a parsed literal as plain ``sphinxalltt``, which has no
+    frame, caption, or highlighting. Sphinx defines the ``\PYG`` macros used here for
+    its own code blocks.
+    """
+    body = "".join(_latex_tokens(self, node))
+    self.body.append(
+        f"\n\\begin{{sphinxVerbatim}}[commandchars=\\\\\\{{\\}}]\n{body}\n\\end{{sphinxVerbatim}}\n"
+    )
+    raise nodes.SkipNode
+
+
+def _latex_tokens(self: LaTeXTranslator, node: nodes.Element) -> Iterator[str]:
+    for child in node.children:
+        if isinstance(child, nodes.reference):
+            refid = f"{self.curfilestack[-1]}:{child['refid']}"
+            label = "".join(self.hypertarget(i) for i in child["ids"])
+            inner = "".join(_latex_tokens(self, child))
+            yield f"{label}{self.hyperlink(refid)}\\sphinxsamedocref{{{inner}}}}}}}"
+        elif isinstance(child, nodes.inline):
+            yield _latex_token(child.astext(), child["classes"])
+
+
+def _latex_token(text: str, classes: list[str]) -> str:
+    r"""Escape a token and wrap it in the ``\PYG`` macro of its Pygments style.
+
+    >>> _latex_token('"a{b}"', ["s2"])
+    '\\PYG{l+s+s2}{\\PYGZdq{}a\\PYGZob{}b\\PYGZcb{}\\PYGZdq{}}'
+    """
+    text = escape_tex(text, "PYG")
+    if not classes:
+        return text
+    style = _latex_style(classes[0])
+    return "\n".join(
+        f"\\PYG{{{style}}}{{{line}}}" if line else "" for line in text.split("\n")
+    )
+
+
+def _latex_style(css_class: str) -> str:
+    r"""Name the ``\PYG`` style of a CSS class as the Pygments LaTeX formatter does.
+
+    >>> _latex_style("s2"), _latex_style("n")
+    ('l+s+s2', 'n')
+    """
+    token_type = _CSS_TOKEN_TYPES[css_class]
+    names = []
+    while token_type.parent is not None:
+        names.append(STANDARD_TYPES[token_type])
+        token_type = token_type.parent
+    return "+".join(reversed(names))
 
 
 def _take(tokens: list[nodes.inline], length: int) -> list[nodes.inline]:
@@ -627,6 +690,11 @@ def _highlight(source: str, fmt: str) -> list[nodes.inline]:
         for _, t, text in lexer.get_tokens_unprocessed(source)
         if text
     ]
+
+
+_CSS_TOKEN_TYPES = {
+    css: token_type for token_type, css in STANDARD_TYPES.items() if css
+}
 
 
 def _css_class(token_type: _TokenType | None) -> str:
@@ -728,6 +796,7 @@ def _register_tips(
 def setup(app: Sphinx) -> dict[str, Any]:
     app.setup_extension("sphinx_tippy")
     app.add_directive("config-schema", ConfigSchemaDirective)
+    app.add_node(example_block, latex=(visit_example_block_latex, None))
     app.connect("builder-inited", _add_static_path)
     app.connect("env-purge-doc", _purge_tips)
     app.connect("env-merge-info", _merge_tips)
