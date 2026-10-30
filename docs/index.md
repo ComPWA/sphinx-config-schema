@@ -102,7 +102,7 @@ The schema controls how the configuration is rendered:
 
 - Each key has a tooltip containing its `description`, its actual default, the displayed example when it differs from the default, allowed enum values, and any remaining examples. Examples inferred from enum choices are labelled as such. Double backticks in descriptions render as inline code. The tooltip of the last component of the {rst:dir}`table <config-schema:table>` path shows the schema's top-level `description`.
 
-- Each key also links to itself and is registered as a Sphinx label. Use the standard {rst:role}`ref` role to reference an option, for example, ``{ref}`output <tool-example-output>` `` in MyST or ``:ref:`output <tool-example-output>` `` in reST. You can also append its anchor to the page URL. For example, the `output` option above can be referenced with {ref}`output <tool-example-output>` in TOML, {ref}`output <output>` in YAML, and {ref}`output <output-json>` in JSON. The {rst:dir}`table <config-schema:table>` path becomes part of the anchor. When a key appears more than once on a page, later anchors receive a format suffix to keep their permalinks unique.
+- Each key also links to itself and can be referenced with the standard {rst:role}`ref` role. Unnamed examples use document-qualified labels with a format suffix, such as ``{ref}`output <index:tool-example-output-toml>` `` in MyST or ``:ref:`output <index:tool-example-output-toml>` `` in reST. The links above resolve to {ref}`output <index:tool-example-output-toml>` in TOML, {ref}`output <index:output-yaml>` in YAML, and {ref}`output <index:output-json>` in JSON. Repeated examples with the same format receive numeric suffixes, such as `output-yaml-2`. Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead, for instance `:name: settings` makes its `output` option available as ``{ref}`output <settings-output>` ``. The full {rst:dir}`table <config-schema:table>` path remains part of each option anchor.
 
 The example is built from regular docutils nodes, so it also appears in other output formats, such as LaTeX and plain text. There, each key becomes a label that can be referenced.
 
@@ -123,6 +123,12 @@ Caption of the code block, typically the name of the configuration file.
 :type: ``toml`` (default), ``yaml`` or ``json``
 
 Serialization format of the example.
+```
+
+```{rst:directive:option} name: text
+:type: text
+
+Name the example so it can be referenced with an explicit title using the standard {rst:role}`ref` role. Option and nested-table labels use this name as a prefix instead of adding a format suffix. Names must be unique across the documentation; reusing a name on the same page produces a warning.
 ```
 
 ```{rst:directive:option} strict
