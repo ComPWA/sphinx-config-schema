@@ -55,6 +55,7 @@ class Setting:
         default=None, repr=False
     )
     """Origin of `.value`; unset for settings constructed without schema metadata."""
+    anchor_prefix: str = field(default="", repr=False)
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -62,7 +63,9 @@ class Setting:
 
     @property
     def anchor(self) -> str:
-        return nodes.make_id(".".join(self.path) + self.anchor_suffix)
+        return nodes.make_id(
+            self.anchor_prefix + ".".join(self.path) + self.anchor_suffix
+        )
 
 
 @dataclass(frozen=True)
@@ -73,6 +76,7 @@ class Table:
     name: str
     description: str
     anchor_suffix: str = field(default="", repr=False)
+    anchor_prefix: str = field(default="", repr=False)
 
     @property
     def path(self) -> tuple[str, ...]:
@@ -80,7 +84,9 @@ class Table:
 
     @property
     def anchor(self) -> str:
-        return nodes.make_id(".".join(self.path) + self.anchor_suffix)
+        return nodes.make_id(
+            self.anchor_prefix + ".".join(self.path) + self.anchor_suffix
+        )
 
 
 Entry = Setting | Table
@@ -99,6 +105,7 @@ class ConfigSchemaDirective(SphinxDirective):
     option_spec = MappingProxyType({
         "caption": directives.unchanged_required,
         "format": lambda arg: directives.choice(arg, FORMATS),
+        "name": directives.unchanged_required,
         "strict": directives.flag,
         "table": directives.unchanged_required,
     })
@@ -120,15 +127,29 @@ class ConfigSchemaDirective(SphinxDirective):
         except ValueError as exc:
             raise self.error(str(exc)) from exc
         tips: dict[str, str] = _get_tips(self.env).setdefault(self.env.docname, {})
-        settings = [_make_unique(s, fmt, tips) for s in _drop_empty_tables(settings)]
+        name = self.options.get("name")
+        used = set(self.state.document.ids)
+        settings = [
+            _make_unique(
+                replace(s, anchor_prefix=f"{name}." if name else ""),
+                "" if name else fmt,
+                used,
+            )
+            for s in _drop_empty_tables(settings)
+        ]
         tips.update({
             f"#{s.anchor}": tip for s in settings if (tip := _entry_tooltip(s))
         })
-        example: nodes.Node = create_literal_block(settings, fmt, rawsource=self.name)
+        example = create_literal_block(settings, fmt, rawsource=self.name)
+        for key in example.findall(nodes.reference):
+            anchor = key["ids"][0]
+            key["names"].append(anchor if name else f"{self.env.docname}:{anchor}")
+            self.state.document.note_explicit_target(key)
         self.set_source_info(example)
         caption = self.options.get("caption")
         if caption is not None:
             example = container_wrapper(self, example, caption)
+        self.add_name(example)
         return [example]
 
 
@@ -143,20 +164,21 @@ def _drop_empty_tables(entries: list[Entry]) -> list[Entry]:
     return [e for e in entries if isinstance(e, Setting) or e.path in used]
 
 
-def _make_unique(setting: Entry, fmt: str, tips: dict[str, str]) -> Entry:
-    """Suffix the anchor of a setting if an earlier example on the page already uses it.
+def _make_unique(setting: Entry, fmt: str, used: set[str]) -> Entry:
+    """Reserve a unique anchor, including the format for unnamed examples.
 
     This happens when the same schema is shown in several formats, for instance in tabs.
 
-    >>> tips = {"#port": "", "#port-yaml": ""}
-    >>> _make_unique(Setting((), "port", 80, ""), "yaml", tips).anchor
+    >>> used = {"port-yaml"}
+    >>> _make_unique(Setting((), "port", 80, ""), "yaml", used).anchor
     'port-yaml-2'
     """
-    suffixes = itertools.chain(
-        ("", f".{fmt}"), (f".{fmt}.{i}" for i in itertools.count(2))
-    )
+    base = f".{fmt}" if fmt else ""
+    suffixes = itertools.chain((base,), (f"{base}.{i}" for i in itertools.count(2)))
     candidates = (replace(setting, anchor_suffix=s) for s in suffixes)
-    return next(c for c in candidates if f"#{c.anchor}" not in tips)
+    result = next(c for c in candidates if c.anchor not in used)
+    used.add(result.anchor)
+    return result
 
 
 def iter_settings(
