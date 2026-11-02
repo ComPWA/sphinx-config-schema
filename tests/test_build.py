@@ -442,3 +442,25 @@ def test_option_role_alias(tmp_path: Path):
         "Port": "#settings.tool.example.server.port",
     }
     assert soup.select_one('p a[href="#settings.tool.example.output"] code')
+
+
+def test_option_role_fallback_title(tmp_path: Path):
+    app = _build(
+        tmp_path,
+        directive=dedent("""
+            :cfg:`!.output` :cfg:`!~.server.port` :cfg:`.nope`
+
+            .. config-schema:: example.schema.json
+               :table: tool.example
+        """),
+    )
+    assert "target not found: .nope" in app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    paragraph = soup.select_one("p")
+    assert paragraph is not None
+    assert not paragraph.select("a")
+    assert [c.get_text() for c in paragraph.select("code")] == [
+        "output",
+        "port",
+        "nope",
+    ]

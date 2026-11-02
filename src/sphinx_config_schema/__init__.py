@@ -848,9 +848,25 @@ class _OptionRole(XRefRole):
         target: str,
     ) -> tuple[str, str]:
         if target.startswith("~"):
-            target = target[1:]
             refnode["config-schema:short"] = True
-        return title, target
+        if not has_explicit_title:
+            title = _fallback_title(target)
+        return title, target.removeprefix("~")
+
+    @override
+    def create_non_xref_node(
+        self,
+    ) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+        if not self.has_explicit_title:
+            self.text = "!" + _fallback_title(self.text[1:])
+        return super().create_non_xref_node()
+
+
+def _fallback_title(target: str) -> str:
+    """Drop the leading dot of a suffix target and, after ``~``, all but the last key."""
+    if target.startswith("~"):
+        return target.rsplit(".", maxsplit=1)[-1]
+    return target.lstrip(".")
 
 
 class _ConfigSchemaDomain(Domain):
