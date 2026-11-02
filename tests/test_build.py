@@ -351,3 +351,26 @@ def test_option_role(tmp_path: Path):
     }
     assert soup.select_one('p a[href="#tool.example.output-toml"] code')
     assert soup.select_one('p a[href="#tool.example.server-toml"] code')
+
+
+def test_option_role_alias(tmp_path: Path):
+    app = _build(
+        tmp_path,
+        directive=dedent("""
+            :cfg:`settings.tool.example.output`
+            :cfg:`Port <settings.tool.example.server.port>`
+            :cfg:`settings.tool.example.missing`
+
+            .. config-schema:: example.schema.json
+               :name: settings
+               :table: tool.example
+        """),
+    )
+    assert "config-schema:option reference target not found" in app.warning.getvalue()
+    soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+    links = {a.get_text(): a["href"] for a in soup.select("p a.reference.internal")}
+    assert links == {
+        "output": "#settings.tool.example.output",
+        "Port": "#settings.tool.example.server.port",
+    }
+    assert soup.select_one('p a[href="#settings.tool.example.output"] code')

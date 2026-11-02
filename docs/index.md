@@ -159,6 +159,8 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 
 :::::
 
+The role is also available under the shorter name {rst:role}`cfg`, as in `` {cfg}`settings.output` ``.
+
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
 ### Other output formats
@@ -207,6 +209,10 @@ Dotted path of the table under which the settings appear, such as `tool.example`
 
 ```{rst:role} config-schema:option
 Link to a key of a {rst:dir}`config-schema` example by its label, rendered as inline code. Without an explicit title, the key itself is the title.
+```
+
+```{rst:role} cfg
+Short alias of {rst:role}`config-schema:option`.
 ```
 
 ```{toctree}

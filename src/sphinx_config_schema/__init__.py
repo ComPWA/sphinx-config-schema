@@ -39,6 +39,8 @@ if TYPE_CHECKING:
     from sphinx.writers.latex import LaTeXTranslator
 
 CSS_CLASS = "config-schema-key"
+OPTION_ROLE_ALIAS = "cfg"
+"""Short name under which :rst:role:`config-schema:option` is also registered."""
 STATIC_DIR = Path(__file__).parent / "_static"
 _NO_DEFAULT = object()
 
@@ -817,6 +819,15 @@ def _register_tips(
         app.env.tippy_config.custom_tips.update(tips)  # ty: ignore[unresolved-attribute]
 
 
+class _OptionRole(XRefRole):
+    """Resolve references to the domain of the option role, also under an alias name."""
+
+    @override
+    def run(self) -> tuple[list[nodes.Node], list[nodes.system_message]]:
+        self.name = "config-schema:option"
+        return super().run()
+
+
 class _ConfigSchemaDomain(Domain):
     """Resolve references to the keys of a :rst:dir:`config-schema` example.
 
@@ -826,7 +837,7 @@ class _ConfigSchemaDomain(Domain):
 
     name = "config-schema"
     label = "Configuration schema"
-    roles = {"option": XRefRole(innernodeclass=nodes.literal, warn_dangling=True)}  # ruff: ignore[mutable-class-default]
+    roles = {"option": _OptionRole(innernodeclass=nodes.literal, warn_dangling=True)}  # ruff: ignore[mutable-class-default]
     initial_data = {"options": {}}  # ruff: ignore[mutable-class-default]
 
     @property
@@ -884,6 +895,10 @@ class _ConfigSchemaDomain(Domain):
 def setup(app: Sphinx) -> dict[str, Any]:
     app.setup_extension("sphinx_tippy")
     app.add_domain(_ConfigSchemaDomain)
+    app.add_role(
+        OPTION_ROLE_ALIAS,
+        _OptionRole(innernodeclass=nodes.literal, warn_dangling=True),
+    )
     app.add_directive("config-schema", ConfigSchemaDirective)
     app.add_node(example_block, latex=(visit_example_block_latex, None))
     app.connect("builder-inited", _add_static_path)
