@@ -28,7 +28,7 @@ dependencies = [
     "pygments",
     "sphinx",
     "sphinx-tippy",
-    "typing-extensions",
+    "typing-extensions>=4.14",
 ]
 dynamic = ["version"]
 
