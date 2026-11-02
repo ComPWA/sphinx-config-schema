@@ -71,3 +71,27 @@ def describe_render():
     def it_rejects_unknown_formats():
         with pytest.raises(ValueError, match="Unknown format"):
             render([], "ini")
+
+    @pytest.mark.parametrize(
+        ("fmt", "load", "expected"),
+        [
+            ("toml", tomllib.loads, {}),
+            ("yaml", yaml.safe_load, {"mode": None}),
+            ("json", json.loads, {"mode": None}),
+        ],
+    )
+    def it_shows_null_defaults_as_null(fmt: str, load, expected: dict):
+        settings = [Setting((), "mode", "a", "", default=None)]
+        assert load(render(settings, fmt)) == expected
+
+    def it_comments_out_null_defaults_in_toml():
+        settings = [Setting((), "mode", "a", "", default=None)]
+        assert render(settings, "toml") == '# mode = "a"'
+
+    @pytest.mark.parametrize(
+        ("fmt", "expected"),
+        [("toml", 'mode = "b"'), ("yaml", "mode: b"), ("json", '{\n  "mode": "b"\n}')],
+    )
+    def it_keeps_non_null_defaults_active(fmt: str, expected: str):
+        settings = [Setting((), "mode", "b", "", default="b")]
+        assert render(settings, fmt) == expected

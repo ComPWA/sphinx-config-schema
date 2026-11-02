@@ -22,3 +22,11 @@ def describe_create_literal_block():
         assert reference["ids"] == ["tool.demo.web-example-edu"]
         assert reference.astext() == key  # cspell:ignore astext
         assert block.astext() == render(settings, fmt)
+
+    def it_anchors_commented_out_keys():
+        settings = [Setting((), "mode", "a", "", default=None)]
+        block = create_literal_block(settings, "toml", rawsource="config-schema")
+        (reference,) = block.findall(nodes.reference)
+        assert reference["ids"] == ["mode"]
+        assert reference.astext() == "mode"
+        assert block.astext() == '# mode = "a"'
