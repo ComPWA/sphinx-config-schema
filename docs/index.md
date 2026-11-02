@@ -111,10 +111,14 @@ The schema controls how the configuration is rendered:
 
 Use the {rst:role}`config-schema:option` role to link to an option. It renders the key as inline code and, without an explicit title, uses the key itself as the title. Unnamed examples use labels qualified by the document name and the format:
 
+:::::::{tab-set}
+
+::::::{tab-item} MyST
+:sync: myst
+
 :::::{tab-set}
 
-::::{tab-item} MyST
-:sync: myst
+::::{tab-item} Option
 
 ```md
 {config-schema:option}`index:tool.example.output-toml`
@@ -122,8 +126,36 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 ::::
 
-::::{tab-item} reST
+::::{tab-item} cfg
+
+The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`.
+
+```md
+{cfg}`index:tool.example.output-toml`
+```
+
+::::
+
+::::{tab-item} ref
+
+The {rst:role}`ref` role needs an explicit title and renders it as plain text: {ref}`the output option <index:tool.example.output-toml>`.
+
+```md
+{ref}`the output option <index:tool.example.output-toml>`
+```
+
+::::
+
+:::::
+
+::::::
+
+::::::{tab-item} reST
 :sync: rst
+
+:::::{tab-set}
+
+::::{tab-item} Option
 
 ```rst
 :config-schema:option:`index:tool.example.output-toml`
@@ -131,9 +163,33 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 ::::
 
+::::{tab-item} cfg
+
+The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`.
+
+```rst
+:cfg:`index:tool.example.output-toml`
+```
+
+::::
+
+::::{tab-item} ref
+
+The {rst:role}`ref` role needs an explicit title and renders it as plain text: {ref}`the output option <index:tool.example.output-toml>`.
+
+```rst
+:ref:`the output option <index:tool.example.output-toml>`
+```
+
+::::
+
 :::::
 
-The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above. The standard {rst:role}`ref` role accepts the same labels, but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`, written as ``{ref}`the output option <index:tool.example.output-toml>` ``.
+::::::
+
+:::::::
+
+The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above.
 
 Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead. The YAML tab above does this with `:name: settings`, so its {config-schema:option}`settings.output` option is referenced with:
 
@@ -158,8 +214,6 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 ::::
 
 :::::
-
-The role is also available under the shorter name {rst:role}`cfg`, as in `` {cfg}`settings.output` ``.
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
