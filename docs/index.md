@@ -20,9 +20,10 @@ This is useful for tools that read their configuration from a file, such as a `[
 pip install sphinx-config-schema
 ```
 
-Then add the extension to your `conf.py`. It loads `sphinx_tippy` automatically:
+Then add the extension to the [`extensions`](https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-extensions) list in your [`conf.py`](https://www.sphinx-doc.org/en/master/usage/configuration.html). It loads `sphinx_tippy` automatically:
 
-```python
+```{code-block} python
+:caption: conf.py
 extensions = [
     "sphinx_config_schema",
 ]
