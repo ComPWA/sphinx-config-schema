@@ -17,7 +17,9 @@ add_module_names = False
 api_github_repo = f"{ORGANIZATION}/{REPO_NAME}"
 api_linkcode_rev = REVISION
 api_target_substitutions = {
+    "Iterator": "collections.abc.Iterator",
     "nodes.Element": "docutils.nodes.Element",
+    "Sequence": "collections.abc.Sequence",
     "Sphinx": "sphinx.application.Sphinx",
 }
 author = "Common Partial-Wave Analysis"

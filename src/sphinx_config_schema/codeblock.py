@@ -36,11 +36,12 @@ def create_literal_block(
     The example is highlighted as a whole, so that the lexer sees the full context, and
     the tokens of each key are then wrapped in its anchor.
 
-    Sphinx highlights a literal block again when its ``rawsource`` equals its text,
-    which would drop the inline nodes built here. A ``rawsource`` that differs from the
-    text, such as the directive name, marks the block as a parsed literal instead. The
-    surrounding containers give the block the class names that themes and
-    sphinx-copybutton expect from a regular code block.
+    Sphinx highlights a literal block again when its `~docutils.nodes.Element.rawsource`
+    equals its text, which would drop the inline nodes built here. A
+    `~docutils.nodes.Element.rawsource` that differs from the text, such as the
+    directive name, marks the block as a parsed literal instead. The surrounding
+    containers give the block the class names that themes and sphinx-copybutton expect
+    from a regular code block.
     """
     fragments = list(_iter_fragments(settings, fmt))
     tokens = _highlight("".join(text for text, _ in fragments), fmt)
