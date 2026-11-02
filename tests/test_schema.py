@@ -32,7 +32,7 @@ def describe_iter_settings():
         assert setting.value == ("a" if default is None else default)
         assert setting.allowed == (None, "a", "b")
         assert setting.description == "Choose a mode."
-        assert setting.default is default
+        assert setting.default == default
         assert schema["properties"]["mode"]["default"] is default
 
     @pytest.mark.parametrize("example", ["b", False, 0])
