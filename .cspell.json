@@ -46,5 +46,5 @@
   "language": "en-US",
   "useGitignore": true,
   "version": "0.2",
-  "words": ["docstrings", "pyproject", "rawsource"]
+  "words": ["codeblock", "docstrings", "pyproject", "rawsource"]
 }

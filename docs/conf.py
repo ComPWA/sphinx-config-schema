@@ -16,12 +16,24 @@ PDF_PATH = Path(f"_build/pdf/{REPO_NAME}.pdf")  # built by `poe pdf`
 add_module_names = False
 api_github_repo = f"{ORGANIZATION}/{REPO_NAME}"
 api_linkcode_rev = REVISION
-api_target_substitutions = {"Sphinx": "sphinx.application.Sphinx"}
+api_target_substitutions = {
+    "Iterator": "collections.abc.Iterator",
+    "nodes.Element": "docutils.nodes.Element",
+    "Sequence": "collections.abc.Sequence",
+    "Sphinx": "sphinx.application.Sphinx",
+}
 author = "Common Partial-Wave Analysis"
 autodoc_default_options = {
+    "exclude-members": ", ".join((  # ruff: ignore[static-join-to-f-string]
+        "has_content",
+        "option_spec",
+        "required_arguments",
+        "run",
+        "setup",
+    )),
     "members": True,
-    "undoc-members": True,
     "show-inheritance": True,
+    "undoc-members": True,
 }
 autodoc_member_order = "bysource"
 autodoc_typehints_format = "short"
