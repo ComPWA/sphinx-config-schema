@@ -65,6 +65,7 @@ test = [
     "beautifulsoup4",
     "pytest",
     "pytest-cov",
+    "pytest-describe",
     "pytest-xdist",
     "pyyaml",
 ]
@@ -348,12 +349,14 @@ task-tags = ["cspell"]
     "T20",
     "assert",
     "boolean-type-hint-positional-argument",
+    "complex-structure",
     "float-equality-comparison",
     "implicit-namespace-package",
     "import-private-name",
     "magic-value-comparison",
     "no-self-use",
     "private-member-access",
+    "too-many-statements",
 ]
 "docs/*" = [
     "assert",
