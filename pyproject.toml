@@ -101,6 +101,7 @@ source = ["src"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:"]
+fail_under = 95
 
 [tool.docstrfmt]
 docstring-trailing-line = false
@@ -192,7 +193,6 @@ heading = "Testing"
 cmd = """
 pytest \
     --cov=sphinx_config_schema \
-    --cov-fail-under=95 \
     --cov-report=html \
     --cov-report=xml \
     ${paths}
