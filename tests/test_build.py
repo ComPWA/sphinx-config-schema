@@ -88,7 +88,7 @@ def describe_config_schema_directive():
     def it_adds_tooltips(html_dir: Path):
         (tips_file,) = (html_dir / "_static" / "tippy").glob("index.*.js")
         tips = tips_file.read_text()
-        assert '"a[href=\\"#tool.example.output-toml\\"]"' in tips
+        assert R'"a[href=\"#tool.example.output-toml\"]"' in tips
         assert "Output <code>directory</code>." in tips
         assert "Server settings." in tips
         assert "Example settings." in tips

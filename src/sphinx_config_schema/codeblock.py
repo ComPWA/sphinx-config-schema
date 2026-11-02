@@ -78,7 +78,11 @@ def _visit_example_block_latex(self: LaTeXTranslator, node: _example_block) -> N
     """
     body = "".join(_latex_tokens(self, node))
     self.body.append(
-        f"\n\\begin{{sphinxVerbatim}}[commandchars=\\\\\\{{\\}}]\n{body}\n\\end{{sphinxVerbatim}}\n"
+        "\n"
+        Rf"\begin{{sphinxVerbatim}}[commandchars=\\\{{\}}]"
+        f"\n{body}\n"
+        Rf"\end{{sphinxVerbatim}}"
+        "\n"
     )
     raise nodes.SkipNode
 
@@ -89,7 +93,7 @@ def _latex_tokens(self: LaTeXTranslator, node: nodes.Element) -> Iterator[str]:
             refid = f"{self.curfilestack[-1]}:{child['refid']}"
             label = "".join(self.hypertarget(i) for i in child["ids"])
             inner = "".join(_latex_tokens(self, child))
-            yield f"{label}{self.hyperlink(refid)}\\sphinxsamedocref{{{inner}}}}}}}"
+            yield Rf"{label}{self.hyperlink(refid)}\sphinxsamedocref{{{inner}}}}}}}"
         elif isinstance(child, nodes.inline):
             yield _latex_token(child.astext(), child["classes"])
 
@@ -105,7 +109,7 @@ def _latex_token(text: str, classes: list[str]) -> str:
         return text
     style = _latex_style(classes[0])
     return "\n".join(
-        f"\\PYG{{{style}}}{{{line}}}" if line else "" for line in text.split("\n")
+        Rf"\PYG{{{style}}}{{{line}}}" if line else "" for line in text.split("\n")
     )
 
 
