@@ -109,7 +109,7 @@ The schema controls how the configuration is rendered:
 
 ### Referencing options
 
-Use the {rst:role}`config-schema:option` role to link to an option. It renders the key as inline code and, without an explicit title, uses the key itself as the title. Unnamed examples use labels qualified by the document name and the format:
+Use the {rst:role}`config-schema:option` role to link to an option. It renders the key as inline code and, without an explicit title, uses the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. Unnamed examples use labels qualified by the document name and the format:
 
 :::::::{tab-set}
 
@@ -215,6 +215,8 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 
 :::::
 
+The role follows Sphinx conventions for [suffix matching with a leading `.`](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects) and [shortened link text with `~`](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax), which can be combined as `` {cfg}`~.server.host` ``. Without a leading dot, targets resolve as exact labels. Suffix matching omits the document, table prefix, and format; matches in the current document take precedence. If several candidates remain, a warning lists them.
+
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
 ### Other output formats
@@ -262,7 +264,7 @@ Dotted path of the table under which the settings appear, such as `tool.example`
 ````
 
 ```{rst:role} config-schema:option
-Link to a key of a {rst:dir}`config-schema` example by its label, rendered as inline code. Without an explicit title, the key itself is the title.
+Link to a key of a {rst:dir}`config-schema` example by its label, rendered as inline code. Without an explicit title, the key path below the {rst:dir}`table <config-schema:table>` is the title. A leading `.` matches labels by the end of their key path and a leading `~` shortens the title to the last key.
 ```
 
 ```{rst:role} cfg
