@@ -109,7 +109,7 @@ The schema controls how the configuration is rendered:
 
 ### Referencing options
 
-Use the {rst:role}`config-schema:option` role to link to an option. It renders the key as inline code and, without an explicit title, uses the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. Unnamed examples use labels qualified by the document name and the format:
+Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
 
 :::::::{tab-set}
 
@@ -128,8 +128,6 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 ::::{tab-item} cfg
 
-The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`.
-
 ```md
 {cfg}`index:tool.example.output-toml`
 ```
@@ -137,8 +135,6 @@ The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`
 ::::
 
 ::::{tab-item} ref
-
-The {rst:role}`ref` role needs an explicit title and renders it as plain text: {ref}`the output option <index:tool.example.output-toml>`.
 
 ```md
 {ref}`the output option <index:tool.example.output-toml>`
@@ -165,8 +161,6 @@ The {rst:role}`ref` role needs an explicit title and renders it as plain text: {
 
 ::::{tab-item} cfg
 
-The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`.
-
 ```rst
 :cfg:`index:tool.example.output-toml`
 ```
@@ -174,8 +168,6 @@ The {rst:role}`cfg` role is a shorter alias for {rst:role}`config-schema:option`
 ::::
 
 ::::{tab-item} ref
-
-The {rst:role}`ref` role needs an explicit title and renders it as plain text: {ref}`the output option <index:tool.example.output-toml>`.
 
 ```rst
 :ref:`the output option <index:tool.example.output-toml>`
@@ -215,7 +207,7 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 
 :::::
 
-The role follows Sphinx conventions for [suffix matching with a leading `.`](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects) and [shortened link text with `~`](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax), which can be combined as `` {cfg}`~.server.host` ``. Without a leading dot, targets resolve as exact labels. Suffix matching omits the document, table prefix, and format; matches in the current document take precedence. If several candidates remain, a warning lists them.
+Following Sphinx conventions, a [leading `.` matches the end of a key path](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects), as in `` {cfg}`.tool.example.server.host` `` ({cfg}`.tool.example.server.host`), and [`~` shortens the title](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax), as in `` {cfg}`~.tool.example.server.host` `` ({cfg}`~.tool.example.server.host`). Here, `tool.example` distinguishes the TOML example from the YAML and JSON examples. Matches in the current document take precedence; if several candidates remain, a warning lists them. Without a leading dot, targets resolve as exact labels.
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
@@ -264,7 +256,7 @@ Dotted path of the table under which the settings appear, such as `tool.example`
 ````
 
 ```{rst:role} config-schema:option
-Link to a key of a {rst:dir}`config-schema` example by its label, rendered as inline code. Without an explicit title, the key path below the {rst:dir}`table <config-schema:table>` is the title. A leading `.` matches labels by the end of their key path and a leading `~` shortens the title to the last key.
+Link to a key of a {rst:dir}`config-schema` example as inline code. See [Referencing options](#referencing-options) for label syntax and title formatting.
 ```
 
 ```{rst:role} cfg

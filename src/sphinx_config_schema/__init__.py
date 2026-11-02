@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from sphinx.environment import BuildEnvironment
 
 
+_LOGGER = logging.getLogger(__name__)
 OPTION_ROLE_ALIAS = "cfg"
 """Short name under which :rst:role:`config-schema:option` is also registered."""
 
@@ -98,7 +99,7 @@ class ConfigSchemaDirective(SphinxDirective):
             f"#{s.anchor}": tip for s in settings if (tip := _entry_tooltip(s))
         })
         example = create_literal_block(settings, fmt, rawsource=self.name)
-        self._register_labels(example, settings, name, len(table))
+        self._register_labels(example, settings, name, table_depth=len(table))
         self.set_source_info(example)
         caption = self.options.get("caption")
         if caption is not None:
@@ -153,9 +154,6 @@ def _make_unique(setting: Entry, fmt: str, used: set[str]) -> Entry:
     result = next(c for c in candidates if c.anchor not in used)
     used.add(result.anchor)
     return result
-
-
-logger = logging.getLogger(__name__)
 
 
 class _OptionRole(XRefRole):
@@ -268,7 +266,7 @@ class _ConfigSchemaDomain(Domain):
         local = [m for m in matches if self.options[m][0] == fromdocname]
         candidates = local or matches
         if len(candidates) > 1:
-            logger.warning(
+            _LOGGER.warning(
                 "more than one option found for %r: %s",
                 target,
                 ", ".join(candidates),
