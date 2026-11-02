@@ -5,6 +5,7 @@
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/sphinx-config-schema)](https://pypi.org/project/sphinx-config-schema)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ComPWA/sphinx-config-schema/main.svg)](https://results.pre-commit.ci/latest/github/ComPWA/sphinx-config-schema/main)
 [![CI status](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ComPWA/sphinx-config-schema/actions/workflows/ci.yml?query=branch%3Amain)
+[![Test coverage](https://codecov.io/gh/ComPWA/sphinx-config-schema/branch/main/graph/badge.svg)](https://codecov.io/gh/ComPWA/sphinx-config-schema)
 [![Spelling checked](https://img.shields.io/badge/cspell-checked-brightgreen.svg)](https://github.com/streetsidesoftware/cspell/tree/main/packages/cspell)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)

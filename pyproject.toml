@@ -101,6 +101,7 @@ source = ["src"]
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:"]
+fail_under = 95
 
 [tool.docstrfmt]
 docstring-trailing-line = false
@@ -192,7 +193,6 @@ heading = "Testing"
 cmd = """
 pytest \
     --cov=sphinx_config_schema \
-    --cov-fail-under=75 \
     --cov-report=html \
     --cov-report=xml \
     ${paths}
@@ -394,7 +394,7 @@ key-empty = "off"
 
 [[tool.tombi.schemas]]
 root = "tool.compwa.policy"
-path = "https://raw.githubusercontent.com/ComPWA/policy/0.10.2/compwa-policy.schema.json"
+path = "https://raw.githubusercontent.com/ComPWA/policy/0.10.3/compwa-policy.schema.json"
 include = ["pyproject.toml"]
 
 [tool.ty.rules]
