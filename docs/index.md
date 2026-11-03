@@ -220,7 +220,7 @@ When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a 
 
 ### Other output formats
 
-The example is built from regular docutils nodes, so it also appears in other output formats, such as plain text and LaTeX. There, each key becomes a label that can be referenced. In LaTeX output, the example is a highlighted code block with its caption, like any other code block. Tooltips and the marker of required keys only appear in HTML.
+The example is built from regular docutils nodes, so it also appears in other output formats, such as plain text and LaTeX. There, each key becomes a label that can be referenced. In LaTeX output, the example is a highlighted code block with its caption, like any other code block. Tooltips only appear in HTML. Instead of the asterisk, the line of a required key ends in a `# required` comment, except in JSON, which has no comments.
 
 ::::{only} html
 {{ pdf_download }}

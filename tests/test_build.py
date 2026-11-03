@@ -355,6 +355,25 @@ def describe_config_schema_directive():
                 r"{\sphinxsamedocref{\PYG{n}{port}}}}"
             ) in tex
 
+        @pytest.mark.parametrize("fmt", ["toml", "yaml", "json"])
+        def it_comments_required_keys_in_latex(tmp_path: Path, fmt: str):
+            app = _build(
+                tmp_path,
+                f".. config-schema:: example.schema.json\n   :format: {fmt}\n",
+                schema={**SCHEMA, "required": ["output"]},
+                builder="latex",
+            )
+            assert not app.warning.getvalue()
+            tex = (app.outdir / "projectnamenotset.tex").read_text()
+            comment = R"\PYG{c+c1}{  \PYGZsh{} required}"
+            lines = [line for line in tex.splitlines() if comment in line]
+            if fmt == "json":
+                assert not lines
+            else:
+                (line,) = lines
+                assert R"{output}" in line
+                assert line.endswith(comment)
+
 
 def describe_references():
     def it_resolves_ref_targets(tmp_path: Path):
