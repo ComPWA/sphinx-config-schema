@@ -71,6 +71,7 @@ The {rst:dir}`format <config-schema:format>` option renders the example as `yaml
 ```{config-schema} example.schema.json
 :caption: pyproject.toml
 :table: tool.example
+:header-titles:
 ```
 
 :::
@@ -114,7 +115,7 @@ The schema controls how the configuration is rendered:
 
 ### Referencing options
 
-Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. A reference to the table itself shows its full path, such as {cfg}`.tool.example`, even if the table has no settings of its own and only appears in the headers of its subtables. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
+Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. A reference to the table itself shows its full path, even if the table has no settings of its own and only appears in the headers of its subtables. With the {rst:dir}`header-titles <config-schema:header-titles>` flag, references to the tables of a TOML example show their header instead, such as {cfg}`.tool.example` for the TOML tab above. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
 
 :::::::{tab-set}
 
@@ -241,6 +242,12 @@ Caption of the code block, typically the name of the configuration file.
 :type: ``toml`` (default), ``yaml`` or ``json``
 
 Serialization format of the example.
+```
+
+```{rst:directive:option} header-titles
+:type: flag
+
+Title references to the tables of a TOML example with their header, such as `[tool.example.server]`, instead of the key path. Has no effect in YAML and JSON, which have no table headers.
 ```
 
 ```{rst:directive:option} name: text

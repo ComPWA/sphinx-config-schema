@@ -590,6 +590,38 @@ def describe_references():
             ("example", "#tool.example-toml"),
         ]
 
+    def it_titles_tables_with_their_header_on_request(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`index:tool.example-toml`
+                :cfg:`index:tool.example.server-toml`
+                :cfg:`index:tool.example.server.port-toml`
+                :cfg:`~index:tool.example.server-toml`
+                :cfg:`yaml.tool.example.server`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+                   :header-titles:
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+                   :format: yaml
+                   :name: yaml
+                   :header-titles:
+            """),
+        )
+        assert not app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        titles = [a.get_text() for a in soup.select("p a.reference.internal")]
+        assert titles == [
+            "[tool.example]",
+            "[tool.example.server]",
+            "server.port",
+            "server",
+            "server",
+        ]
+
     def it_anchors_tables_without_settings_in_their_first_subtable(tmp_path: Path):
         server = {"properties": {"port": {"default": 8080}}}
         proxy = {"properties": {"host": {"default": "proxy.org"}}}
