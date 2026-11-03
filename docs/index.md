@@ -208,7 +208,9 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 
 :::::
 
-Following Sphinx conventions, a [leading `.` matches the end of a key path](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects), as in `` {cfg}`.tool.example.server.host` `` ({cfg}`.tool.example.server.host`), and [`~` shortens the title](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax), as in `` {cfg}`~.tool.example.server.host` `` ({cfg}`~.tool.example.server.host`). Here, `tool.example` distinguishes the TOML example from the YAML and JSON examples. Matches in the current document take precedence, followed by matches whose complete key path equals the target, so `` {cfg}`.server.port` `` prefers an example without a table over one with `tool.example`. If several candidates remain, a warning lists them. Without a leading dot, targets resolve as exact labels. In both cases, keys can be spelled as in the schema, such as `log_level`, or as in the label, such as `log-level`.
+As in Sphinx's Python domain, a [leading `.`](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects) matches every label whose key path ends with the target, and [`~`](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax) shortens the title to the last key. For instance, `` {cfg}`.tool.example.server.host` `` renders as {cfg}`.tool.example.server.host` and `` {cfg}`~.tool.example.server.host` `` as {cfg}`~.tool.example.server.host`, where `tool.example` selects the TOML tab over the YAML and JSON tabs.
+
+When a suffix matches several labels, those on the current page take precedence, followed by those whose complete key path equals the target. If several candidates remain, Sphinx warns and lists them. Targets without a leading dot are exact labels. In both cases, keys can be spelled as in the schema, such as `log_level`, or as in the label, such as `log-level`.
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
