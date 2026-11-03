@@ -195,6 +195,18 @@ def _fallback_title(target: str) -> str:
     return target.lstrip(".")
 
 
+def _normalize_label(target: str) -> str:
+    """Spell the keys of an exact target the way they appear in labels.
+
+    >>> _normalize_label("settings.tool.log_level")
+    'settings.tool.log-level'
+    >>> _normalize_label("api/config:tool.Server_Port-toml-2")
+    'api/config:tool.server-port-toml-2'
+    """
+    docname, colon, anchor = target.rpartition(":")
+    return docname + colon + _make_anchor("", tuple(anchor.split(".")), "")
+
+
 class _ConfigSchemaDomain(Domain):
     """Resolve references to the keys of a :rst:dir:`config-schema` example.
 
@@ -260,7 +272,8 @@ class _ConfigSchemaDomain(Domain):
         labels whose complete key path equals the target.
         """
         if not target.startswith("."):
-            return target if target in self.options else None
+            label = _normalize_label(target)
+            return label if label in self.options else None
         suffix = _make_anchor("", tuple(target[1:].split(".")), "")
         matches = sorted(
             label

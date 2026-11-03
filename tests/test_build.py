@@ -476,6 +476,32 @@ def describe_references():
         }
         assert soup.select_one('p a[href="#settings.tool.example.output"] code')
 
+    def it_normalizes_keys_in_exact_targets(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`settings.log_level`
+                :cfg:`settings.log-level`
+                :cfg:`index:log_level-toml`
+
+                .. config-schema:: example.schema.json
+                   :name: settings
+
+                .. config-schema:: example.schema.json
+            """),
+            schema={"properties": {"log_level": {"default": "info"}}},
+        )
+        assert "target not found" not in app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        links = [
+            (a.get_text(), a["href"]) for a in soup.select("p a.reference.internal")
+        ]
+        assert links == [
+            ("log_level", "#settings.log-level"),
+            ("log_level", "#settings.log-level"),
+            ("log_level", "#log-level-toml"),
+        ]
+
     def it_strips_dots_and_tildes_from_unlinked_titles(tmp_path: Path):
         app = _build(
             tmp_path,
