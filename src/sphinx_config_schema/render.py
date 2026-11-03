@@ -73,15 +73,26 @@ def _build_tree(settings: list[Setting]) -> _Tree:
 def _iter_toml(
     settings: list[Setting], tables: dict[tuple[str, ...], Table]
 ) -> Iterator[_Fragment]:
+    """Write the settings under table headers, anchoring each table at its first header.
+
+    A table without settings of its own has no header, so it is anchored in the first
+    header of its subtables, such as ``pwa`` in ``[tool.pwa.paths]``.
+    """
     table: tuple[str, ...] = ()
+    anchored: set[tuple[str, ...]] = set()
     first = True
     for setting in settings:
         if setting.table != table:
             if not first:
                 yield "\n", None
-            *parents, name = map(_to_toml_key, setting.table)
-            yield "[" + "".join(f"{p}." for p in parents), None
-            yield name, tables.get(setting.table)
+            yield "[", None
+            for depth in range(1, len(setting.table) + 1):
+                path = setting.table[:depth]
+                entry = None if path in anchored else tables.get(path)
+                anchored.add(path)
+                if depth > 1:
+                    yield ".", None
+                yield _to_toml_key(path[-1]), entry
             yield "]\n", None
             table = setting.table
         first = False

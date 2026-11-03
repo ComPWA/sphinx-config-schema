@@ -570,6 +570,87 @@ def describe_references():
             ("log_level", "#log-level-toml"),
         ]
 
+    def it_titles_table_references_with_their_full_path(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.tool.example` :cfg:`~.tool.example`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+            """),
+        )
+        assert not app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        links = [
+            (a.get_text(), a["href"]) for a in soup.select("p a.reference.internal")
+        ]
+        assert links == [
+            ("tool.example", "#tool.example-toml"),
+            ("example", "#tool.example-toml"),
+        ]
+
+    def it_titles_tables_with_their_header_on_request(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`index:tool.example-toml`
+                :cfg:`index:tool.example.server-toml`
+                :cfg:`index:tool.example.server.port-toml`
+                :cfg:`~index:tool.example.server-toml`
+                :cfg:`yaml.tool.example.server`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+                   :header-titles:
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+                   :format: yaml
+                   :name: yaml
+                   :header-titles:
+            """),
+        )
+        assert not app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        titles = [a.get_text() for a in soup.select("p a.reference.internal")]
+        assert titles == [
+            "[tool.example]",
+            "[tool.example.server]",
+            "server.port",
+            "server",
+            "server",
+        ]
+
+    def it_anchors_tables_without_settings_in_the_first_nested_header(tmp_path: Path):
+        server = {"properties": {"port": {"default": 8080}}}
+        proxy = {"properties": {"host": {"default": "proxy.org"}}}
+        schema = {"properties": {"server": server, "proxy": proxy}}
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.tool.example`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+            """),
+            schema=schema,
+        )
+        assert not app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        code = soup.select_one("pre")
+        assert code is not None
+        assert "[tool.example.server]" in code.get_text()
+        assert "[tool.example.proxy]" in code.get_text()
+        anchors = [a["id"] for a in code.select("a.config-schema-key")]
+        assert anchors.count("tool.example-toml") == 1
+        assert anchors.index("tool.example-toml") < anchors.index(
+            "tool.example.server-toml"
+        )
+        link = soup.select_one("p a.reference.internal")
+        assert link is not None
+        assert link["href"] == "#tool.example-toml"
+
     def it_strips_dots_and_tildes_from_unlinked_titles(tmp_path: Path):
         app = _build(
             tmp_path,

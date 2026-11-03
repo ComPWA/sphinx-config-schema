@@ -27,8 +27,14 @@ from sphinx_config_schema.codeblock import (
     _visit_example_block_latex,
     create_literal_block,
 )
-from sphinx_config_schema.render import FORMATS
-from sphinx_config_schema.schema import Entry, Setting, _make_anchor, iter_settings
+from sphinx_config_schema.render import FORMATS, _to_toml_key
+from sphinx_config_schema.schema import (
+    Entry,
+    Setting,
+    Table,
+    _make_anchor,
+    iter_settings,
+)
 from sphinx_config_schema.tooltips import (
     _entry_tooltip,
     _get_tips,
@@ -63,6 +69,7 @@ class ConfigSchemaDirective(SphinxDirective):
     option_spec = MappingProxyType({
         "caption": directives.unchanged_required,
         "format": lambda arg: directives.choice(arg, FORMATS),
+        "header-titles": directives.flag,
         "name": directives.unchanged_required,
         "strict": directives.flag,
         "table": directives.unchanged_required,
@@ -99,7 +106,10 @@ class ConfigSchemaDirective(SphinxDirective):
             f"#{s.anchor}": tip for s in settings if (tip := _entry_tooltip(s))
         })
         example = create_literal_block(settings, fmt, rawsource=self.name)
-        self._register_labels(example, settings, name, table_depth=len(table))
+        headers = fmt == "toml" and "header-titles" in self.options
+        self._register_labels(
+            example, settings, name, table_depth=len(table), headers=headers
+        )
         self.set_source_info(example)
         caption = self.options.get("caption")
         if caption is not None:
@@ -113,8 +123,13 @@ class ConfigSchemaDirective(SphinxDirective):
         settings: list[Entry],
         name: str | None,
         table_depth: int,
+        *,
+        headers: bool = False,
     ) -> None:
-        """Make each key a target for :rst:role:`ref` and the option role."""
+        """Make each key a target for :rst:role:`ref` and the option role.
+
+        With ``headers``, references to a table are titled with its TOML header.
+        """
         domain = cast("_ConfigSchemaDomain", self.env.get_domain("config-schema"))
         entries = {s.anchor: s for s in settings}
         for key in example.findall(nodes.reference):
@@ -123,7 +138,10 @@ class ConfigSchemaDirective(SphinxDirective):
             key["names"].append(label)
             self.state.document.note_explicit_target(key)
             entry = entries[anchor]
-            title = ".".join(entry.path[table_depth:]) or entry.name
+            if headers and isinstance(entry, Table):
+                title = f"[{'.'.join(map(_to_toml_key, entry.path))}]"
+            else:
+                title = ".".join(entry.path[table_depth:] or entry.path)
             path = _make_anchor("", entry.path, "")
             domain.options[label] = (self.env.docname, anchor, title, path)
 
@@ -258,7 +276,7 @@ class _ConfigSchemaDomain(Domain):
             return None
         docname, anchor, key, _ = self.options[label]
         if node.get("config-schema:short"):
-            key = key.rsplit(".", maxsplit=1)[-1]
+            key = key.strip("[]").rsplit(".", maxsplit=1)[-1]
         if not node.get("refexplicit"):
             contnode = nodes.literal(key, key)
         return make_refnode(builder, fromdocname, docname, anchor, contnode, key)
