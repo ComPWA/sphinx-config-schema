@@ -90,3 +90,15 @@ def describe_iter_settings():
         assert setting.value == "b"
         assert setting.default == "b"
         assert setting.value_source == "default"
+
+    def it_shows_free_form_tables_as_empty_mappings():
+        env = {"type": "object", "additionalProperties": {"type": "string"}}
+        schema = {"$defs": {"Env": env}, "properties": {"env": {"$ref": "#/$defs/Env"}}}
+        (setting,) = iter_settings(schema, strict=True)
+        assert isinstance(setting, Setting)
+        assert setting.value == {}
+        assert setting.value_source == "placeholder"
+
+    def it_skips_closed_objects_without_values():
+        closed = {"type": "object", "additionalProperties": False}
+        assert not list(iter_settings({"properties": {"closed": closed}}))

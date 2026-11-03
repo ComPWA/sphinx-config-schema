@@ -34,6 +34,11 @@
       "items": { "type": "string" },
       "default": []
     },
+    "env": {
+      "description": "Environment variables to set while the tool runs.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
     "server": {
       "description": "Settings of the server that hosts the output.",
       "type": "object",
@@ -48,6 +53,15 @@
           "type": "integer",
           "default": 8080,
           "examples": [80, 443]
+        },
+        "headers": {
+          "description": "HTTP headers that the server adds to each response.",
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "examples": [
+            { "Cache-Control": "no-cache", "Content-Language": "en" },
+            { "X-Frame-Options": "DENY" }
+          ]
         }
       }
     }

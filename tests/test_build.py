@@ -159,6 +159,39 @@ def describe_config_schema_directive():
         )
 
     @pytest.mark.parametrize(
+        ("fmt", "expected"),
+        [("toml", "env = {}"), ("yaml", "env: {}"), ("json", '"env": {}')],
+    )
+    def it_renders_free_form_tables(tmp_path: Path, fmt: str, expected: str):
+        env = {
+            "description": "Environment variables.",
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+        }
+        app = _build(
+            tmp_path,
+            dedent(f"""
+                :cfg:`.env`
+
+                .. config-schema:: example.schema.json
+                   :format: {fmt}
+                   :strict:
+            """),
+            schema={"properties": {"env": env}},
+        )
+        assert not app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        example = soup.select_one("pre")
+        assert example is not None
+        assert expected in example.get_text()
+        link = soup.select_one("p a.reference.internal")
+        assert link is not None
+        assert link["href"] == f"#env-{fmt}"
+        (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
+        tips = tips_file.read_text()
+        assert rf'"a[href=\"#env-{fmt}\"]": "<p>Environment variables.</p>"' in tips
+
+    @pytest.mark.parametrize(
         "schema", [None, {"properties": {"output": {"default": "build"}}}]
     )
     def it_suffixes_duplicate_anchors(tmp_path: Path, schema):
@@ -207,7 +240,6 @@ def describe_config_schema_directive():
         tips = tips_file.read_text()
         assert "Choose a mode." in tips
         assert "Default: <code>null</code>" in tips
-        assert "Example (inferred from enum):" in tips
         assert "Allowed values:" in tips
         assert "&quot;a&quot;" in tips
         assert "&quot;b&quot;" in tips

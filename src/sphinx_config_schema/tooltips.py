@@ -38,6 +38,8 @@ def to_tooltip(description: str) -> str:
 def _entry_tooltip(entry: Entry) -> str:
     """Create the tooltip of a key, with the values that the example does not show.
 
+    When the value shown is an example itself, the remaining ones are "Other examples".
+
     The tooltip is empty if there is nothing to show, in which case the key gets none.
 
     >>> from sphinx_config_schema.schema import Setting
@@ -45,6 +47,10 @@ def _entry_tooltip(entry: Entry) -> str:
     '<p>Mode.</p><p>Allowed values: <code>&quot;a&quot;</code>, <code>&quot;b&quot;</code></p>'
     >>> _entry_tooltip(Setting((), "port", 80, "", examples=(80, 8080)))
     '<p>Examples: <code>8080</code></p>'
+    >>> _entry_tooltip(
+    ...     Setting((), "port", 80, "", examples=(80, 8080), value_source="example")
+    ... )
+    '<p>Other examples: <code>8080</code></p>'
     >>> _entry_tooltip(Table((), "format", ""))
     ''
     """
@@ -53,14 +59,12 @@ def _entry_tooltip(entry: Entry) -> str:
         return tooltip
     if entry.default is not NO_DEFAULT:
         tooltip += f"<p>Default: {_code(entry.default)}</p>"
-    if entry.value_source in {"example", "enum"}:
-        origin = " (inferred from enum)" if entry.value_source == "enum" else ""
-        tooltip += f"<p>Example{origin}: {_code(entry.value)}</p>"
     if entry.allowed:
         tooltip += f"<p>Allowed values: {_code_list(entry.allowed)}</p>"
     examples = [e for e in entry.examples if e is not None and e != entry.value]
     if examples:
-        tooltip += f"<p>Examples: {_code_list(examples)}</p>"
+        label = "Other examples" if entry.value_source == "example" else "Examples"
+        tooltip += f"<p>{label}: {_code_list(examples)}</p>"
     return tooltip
 
 
