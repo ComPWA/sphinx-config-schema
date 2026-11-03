@@ -98,7 +98,9 @@ The {rst:dir}`format <config-schema:format>` option renders the example as `yaml
 
 The schema controls how the configuration is rendered:
 
-- Each setting shows its `default` or, if it has no usable default, its first non-null example or enum choice. Enum choices are also collected from `anyOf` and `oneOf` alternatives and local `$ref` references. An empty list or table default counts as a placeholder and yields to an example. A free-form table, an object with `additionalProperties` but no `properties`, appears as an empty table if it has no value to show, such as {cfg}`.tool.example.env`, or else like any other setting, such as {cfg}`.tool.example.server.headers` with its `examples`. Settings without a usable value are omitted, or reported as errors when the {rst:dir}`strict <config-schema:strict>` flag is enabled.
+- Each setting shows its `default` or, if it has no usable default, its first non-null example or enum choice. Enum choices are also collected from `anyOf` and `oneOf` alternatives and local `$ref` references. An empty list or table default counts as a placeholder and yields to an example. Settings without a usable value are omitted, or reported as errors when the {rst:dir}`strict <config-schema:strict>` flag is enabled.
+
+- A free-form table, an object with `additionalProperties` but no `properties`, shows its default or example like any other setting, such as {cfg}`.tool.example.server.headers`. Without one, it appears as an empty table, such as {cfg}`.tool.example.env`, so that readers see that it exists.
 
 - Settings with a `null` default keep that default in YAML and JSON. Since TOML has no null value, the example is commented out there, so copying the block does not enable an optional setting. For instance, {config-schema:option}`index:tool.example.color-toml` has a nullable enum and a `null` default, so the TOML tab shows `# color = "auto"`.
 
