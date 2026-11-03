@@ -183,11 +183,15 @@ def _enum_values(
 ) -> tuple[Any, ...]:
     """Collect enum choices from alternatives and local references without following cycles.
 
+    An alternative without choices accepts other values too, so then there are none.
+
     >>> schema = {"$defs": {"Mode": {"enum": ["a", "b"]}}}
     >>> _enum_values({"anyOf": [{"$ref": "#/$defs/Mode"}, {"type": "null"}]}, schema)
     ('a', 'b', None)
     >>> _enum_values({"oneOf": [{"enum": ["a", "b"]}, {"enum": ["c"]}]}, {})
     ('a', 'b', 'c')
+    >>> _enum_values({"anyOf": [{"type": "boolean"}, {"type": "null"}]}, {})
+    ()
     >>> recursive = {"$defs": {"Mode": {"$ref": "#/$defs/Mode"}}}
     >>> _enum_values({"$ref": "#/$defs/Mode"}, recursive)
     ()
@@ -204,9 +208,10 @@ def _enum_values(
         return (None,)
     values: list[Any] = []
     for alternative in field_schema.get("anyOf", field_schema.get("oneOf", [])):
-        for value in _enum_values(alternative, schema, seen):
-            if value not in values:
-                values.append(value)
+        choices = _enum_values(alternative, schema, seen)
+        if not choices:
+            return ()
+        values.extend(v for v in choices if v not in values)
     return tuple(values)
 
 
