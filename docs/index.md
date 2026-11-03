@@ -108,7 +108,7 @@ The schema controls how the configuration is rendered:
 
 - Each key has a tooltip containing its `description`, its actual default, allowed enum values, and any examples other than the value shown. Double backticks in descriptions render as inline code. The tooltip of the last component of the {rst:dir}`table <config-schema:table>` path shows the schema's top-level `description`.
 
-- Keys listed under `required` are marked with an asterisk<span class="config-schema-required"></span> in the example and a <span class="config-schema-badge">required</span> badge in their tooltip, such as {cfg}`.tool.example.server.host`. The marker is not part of the copied text and can be restyled through the `config-schema-required` and `config-schema-badge` CSS classes.
+- Keys listed under `required` get an asterisk<span class="config-schema-required"></span> in the example and a <span class="config-schema-badge">required</span> badge in their tooltip, such as {cfg}`.tool.example.server.host`. The asterisk is not copied with the example. Both can be restyled through the `config-schema-required` and `config-schema-badge` CSS classes.
 
 - Each key links to itself and can be [referenced](#referencing-options).
 
@@ -220,7 +220,7 @@ When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a 
 
 ### Other output formats
 
-The example is built from regular docutils nodes, so it also appears in other output formats, such as plain text and LaTeX. There, each key becomes a label that can be referenced. In LaTeX output, the example is a highlighted code block with its caption, like any other code block.
+The example is built from regular docutils nodes, so it also appears in other output formats, such as plain text and LaTeX. There, each key becomes a label that can be referenced. In LaTeX output, the example is a highlighted code block with its caption, like any other code block. Tooltips and the marker of required keys only appear in HTML.
 
 ::::{only} html
 {{ pdf_download }}
