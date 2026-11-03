@@ -359,7 +359,7 @@ def describe_references():
         assert soup.select_one('p a[href="#tool.example.output-toml"] code')
         assert soup.select_one('p a[href="#tool.example.server-toml"] code')
 
-    def it_option_role_shorthands(tmp_path: Path):
+    def it_resolves_suffix_and_shortened_targets(tmp_path: Path):
         app = _build(
             tmp_path,
             directive=dedent("""
@@ -389,7 +389,7 @@ def describe_references():
         ]
         assert all(soup.select('p a[href^="#settings"] code'))
 
-    def it_option_suffix_prefers_current_document(tmp_path: Path):
+    def it_prefers_suffix_matches_in_the_current_document(tmp_path: Path):
         app = _build(
             tmp_path,
             directive=dedent("""
@@ -452,7 +452,7 @@ def describe_references():
             "#tool.example.server.port-toml",
         ]
 
-    def it_option_role_alias(tmp_path: Path):
+    def it_registers_a_short_role_alias(tmp_path: Path):
         app = _build(
             tmp_path,
             directive=dedent("""
@@ -476,7 +476,7 @@ def describe_references():
         }
         assert soup.select_one('p a[href="#settings.tool.example.output"] code')
 
-    def it_option_role_fallback_title(tmp_path: Path):
+    def it_strips_dots_and_tildes_from_unlinked_titles(tmp_path: Path):
         app = _build(
             tmp_path,
             directive=dedent("""
