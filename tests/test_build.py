@@ -189,7 +189,7 @@ def describe_config_schema_directive():
         assert link["href"] == f"#env-{fmt}"
         (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
         tips = tips_file.read_text()
-        assert f'"a[href=\\"#env-{fmt}\\"]": "<p>Environment variables.</p>"' in tips
+        assert rf'"a[href=\"#env-{fmt}\"]": "<p>Environment variables.</p>"' in tips
 
     @pytest.mark.parametrize(
         "schema", [None, {"properties": {"output": {"default": "build"}}}]
