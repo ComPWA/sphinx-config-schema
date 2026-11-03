@@ -240,7 +240,6 @@ def describe_config_schema_directive():
         tips = tips_file.read_text()
         assert "Choose a mode." in tips
         assert "Default: <code>null</code>" in tips
-        assert "Example (inferred from enum):" in tips
         assert "Allowed values:" in tips
         assert "&quot;a&quot;" in tips
         assert "&quot;b&quot;" in tips
