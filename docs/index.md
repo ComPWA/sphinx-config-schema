@@ -98,7 +98,7 @@ The {rst:dir}`format <config-schema:format>` option renders the example as `yaml
 
 The schema controls how the configuration is rendered:
 
-- Each setting shows its `default` or, if it has no usable default, its first non-null example or enum choice. Enum choices are also collected from `anyOf` and `oneOf` alternatives and local `$ref` references. An empty list or table default counts as a placeholder and yields to an example. Settings without a usable value are omitted, or reported as errors when the {rst:dir}`strict <config-schema:strict>` flag is enabled.
+- Each setting shows its `default` or, if it has no usable default, its first non-null example or enum choice. Enum choices are also collected from `anyOf` and `oneOf` alternatives and local `$ref` references, unless an alternative accepts any value of its type, as in a nullable boolean. An empty list or table default counts as a placeholder and yields to an example. Settings without a usable value are omitted, or reported as errors when the {rst:dir}`strict <config-schema:strict>` flag is enabled.
 
 - A free-form table, an object with `additionalProperties` but no `properties`, shows its default or example like any other setting, such as {cfg}`.tool.example.server.headers`. Without one, it appears as an empty table, such as {cfg}`.tool.example.env`, so that readers see that it exists.
 
