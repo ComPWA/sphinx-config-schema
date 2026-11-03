@@ -427,6 +427,31 @@ def describe_references():
         assert link is not None
         assert link["href"] == "#other.tool.example.server.port"
 
+    def it_prefers_suffix_matches_without_extra_keys(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.server.port`
+                :cfg:`.tool.example.server.port`
+                :cfg:`.port`
+
+                .. config-schema:: example.schema.json
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+            """),
+        )
+        warnings = app.warning.getvalue()
+        assert "more than one option found for '.port'" in warnings
+        assert "'.server.port'" not in warnings
+        assert "'.tool.example.server.port'" not in warnings
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        targets = [a["href"] for a in soup.select("p a.reference.internal")]
+        assert targets[:2] == [
+            "#server.port-toml",
+            "#tool.example.server.port-toml",
+        ]
+
     def it_option_role_alias(tmp_path: Path):
         app = _build(
             tmp_path,

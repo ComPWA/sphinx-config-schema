@@ -254,7 +254,11 @@ class _ConfigSchemaDomain(Domain):
     def _find_label(
         self, fromdocname: str, target: str, node: pending_xref
     ) -> str | None:
-        """Look up a label, or with a leading dot, the labels ending in that key path."""
+        """Look up a label, or with a leading dot, the labels ending in that key path.
+
+        Among suffix matches, labels in the current document take precedence, then
+        labels whose complete key path equals the target.
+        """
         if not target.startswith("."):
             return target if target in self.options else None
         suffix = _make_anchor("", tuple(target[1:].split(".")), "")
@@ -265,6 +269,8 @@ class _ConfigSchemaDomain(Domain):
         )
         local = [m for m in matches if self.options[m][0] == fromdocname]
         candidates = local or matches
+        complete = [c for c in candidates if self.options[c][3] == suffix]
+        candidates = complete or candidates
         if len(candidates) > 1:
             _LOGGER.warning(
                 "more than one option found for %r: %s",
