@@ -167,6 +167,13 @@ def describe_config_schema_directive():
         assert required[0].get_text() == "output"
         css = (app.outdir / "_static" / "config-schema.css").read_text()
         assert ".config-schema-required::after" in css
+        (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
+        tips = tips_file.read_text()
+        assert (
+            R'"a[href=\"#output-toml\"]": "<p>Output <code>directory</code>.</p><p>Required</p>'
+            in tips
+        )
+        assert tips.count("<p>Required</p>") == 1
 
     @pytest.mark.parametrize(
         ("fmt", "expected"),

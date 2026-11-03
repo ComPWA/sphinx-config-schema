@@ -51,10 +51,14 @@ def _entry_tooltip(entry: Entry) -> str:
     ...     Setting((), "port", 80, "", examples=(80, 8080), value_source="example")
     ... )
     '<p>Other examples: <code>8080</code></p>'
+    >>> _entry_tooltip(Setting((), "host", "a", "Host.", required=True))
+    '<p>Host.</p><p>Required</p>'
     >>> _entry_tooltip(Table((), "format", ""))
     ''
     """
     tooltip = to_tooltip(entry.description) if entry.description else ""
+    if entry.required:
+        tooltip += "<p>Required</p>"
     if isinstance(entry, Table):
         return tooltip
     if entry.default is not NO_DEFAULT:
