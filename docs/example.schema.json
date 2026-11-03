@@ -34,6 +34,11 @@
       "items": { "type": "string" },
       "default": []
     },
+    "env": {
+      "description": "Environment variables to set while the tool runs, such as ``LANG = \"C\"``.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
     "server": {
       "description": "Settings of the server that hosts the output.",
       "type": "object",

@@ -37,10 +37,14 @@ class Setting:
     """The values that the schema allows for this setting through ``enum``."""
     default: Any = field(default=NO_DEFAULT, repr=False)
     """The actual schema default, kept separate from the displayed example."""
-    value_source: Literal["default", "example", "enum"] | None = field(
+    value_source: Literal["default", "example", "enum", "placeholder"] | None = field(
         default=None, repr=False
     )
-    """Origin of `.value`; unset for settings constructed without schema metadata."""
+    """Origin of `.value`; unset for settings constructed without schema metadata.
+
+    A ``"placeholder"`` is the empty mapping shown for a free-form table, an object with
+    ``additionalProperties`` but neither ``properties`` nor a value to show.
+    """
     _anchor_prefix: str = field(default="", repr=False)
     _anchor_suffix: str = field(default="", repr=False)
 
@@ -143,6 +147,9 @@ def iter_settings(
             if value is None:
                 value = next((item for item in allowed if item is not None), None)
                 value_source = "enum"
+            if value is None and _is_free_form_table(effective_schema):
+                value = {}
+                value_source = "placeholder"
             if value is None:
                 missing.append(".".join((*sub_table, name)))
                 continue
@@ -232,6 +239,24 @@ def _iter_tables(
 def _is_table(field_schema: dict[str, Any]) -> bool:
     return (
         field_schema.get("type", "object") == "object" and "properties" in field_schema
+    )
+
+
+def _is_free_form_table(field_schema: dict[str, Any]) -> bool:
+    """Check whether a field is a table of arbitrary keys, such as environment variables.
+
+    >>> _is_free_form_table({
+    ...     "type": "object",
+    ...     "additionalProperties": {"type": "string"},
+    ... })
+    True
+    >>> _is_free_form_table({"type": "object", "additionalProperties": False})
+    False
+    """
+    return (
+        field_schema.get("type") == "object"
+        and field_schema.get("additionalProperties", True) is not False
+        and "properties" not in field_schema
     )
 
 
