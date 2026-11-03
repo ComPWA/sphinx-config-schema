@@ -102,3 +102,19 @@ def describe_iter_settings():
     def it_skips_closed_objects_without_values():
         closed = {"type": "object", "additionalProperties": False}
         assert not list(iter_settings({"properties": {"closed": closed}}))
+
+    def it_marks_required_keys():
+        server = {
+            "properties": {"host": {"examples": ["example.org"]}},
+            "required": ["host"],
+        }
+        schema = {
+            "$defs": {"Server": server},
+            "properties": {
+                "output": {"default": "build"},
+                "server": {"$ref": "#/$defs/Server"},
+            },
+            "required": ["server"],
+        }
+        required = {e.name: e.required for e in iter_settings(schema)}
+        assert required == {"output": False, "server": True, "host": True}

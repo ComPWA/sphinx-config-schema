@@ -38,9 +38,8 @@ def to_tooltip(description: str) -> str:
 def _entry_tooltip(entry: Entry) -> str:
     """Create the tooltip of a key, with the values that the example does not show.
 
-    When the value shown is an example itself, the remaining ones are "Other examples".
-
-    The tooltip is empty if there is nothing to show, in which case the key gets none.
+    The details below the description share one paragraph to keep them compact. The
+    tooltip is empty if there is nothing to show, in which case the key gets none.
 
     >>> from sphinx_config_schema.schema import Setting
     >>> _entry_tooltip(Setting((), "mode", "a", "Mode.", allowed=("a", "b")))
@@ -51,20 +50,34 @@ def _entry_tooltip(entry: Entry) -> str:
     ...     Setting((), "port", 80, "", examples=(80, 8080), value_source="example")
     ... )
     '<p>Other examples: <code>8080</code></p>'
+    >>> _entry_tooltip(Setting((), "host", "a", "Host.", required=True))
+    '<p><span class="config-schema-badge">required</span> Host.</p>'
+    >>> _entry_tooltip(Setting((), "port", 80, "Port.", default=80, examples=(443,)))
+    '<p>Port.</p><p>Default: <code>80</code><br>Examples: <code>443</code></p>'
     >>> _entry_tooltip(Table((), "format", ""))
     ''
     """
     tooltip = to_tooltip(entry.description) if entry.description else ""
+    if entry.required:
+        badge = '<span class="config-schema-badge">required</span>'
+        tooltip = (
+            f"<p>{badge} {tooltip.removeprefix('<p>')}"
+            if tooltip
+            else f"<p>{badge}</p>"
+        )
     if isinstance(entry, Table):
         return tooltip
+    details: list[str] = []
     if entry.default is not NO_DEFAULT:
-        tooltip += f"<p>Default: {_code(entry.default)}</p>"
+        details.append(f"Default: {_code(entry.default)}")
     if entry.allowed:
-        tooltip += f"<p>Allowed values: {_code_list(entry.allowed)}</p>"
+        details.append(f"Allowed values: {_code_list(entry.allowed)}")
     examples = [e for e in entry.examples if e is not None and e != entry.value]
     if examples:
         label = "Other examples" if entry.value_source == "example" else "Examples"
-        tooltip += f"<p>{label}: {_code_list(examples)}</p>"
+        details.append(f"{label}: {_code_list(examples)}")
+    if details:
+        tooltip += f"<p>{'<br>'.join(details)}</p>"
     return tooltip
 
 

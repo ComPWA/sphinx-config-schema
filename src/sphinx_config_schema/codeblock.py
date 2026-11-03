@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from sphinx_config_schema.schema import Entry
 
 CSS_CLASS = "config-schema-key"
+REQUIRED_CSS_CLASS = "config-schema-required"
 
 
 def create_literal_block(
@@ -46,6 +47,7 @@ def create_literal_block(
     fragments = list(_iter_fragments(settings, fmt))
     tokens = _highlight("".join(text for text, _ in fragments), fmt)
     block = _example_block(rawsource, "")
+    block["comment"] = _COMMENT_PREFIXES.get(fmt)
     for text, setting in fragments:
         inlines = _take(tokens, len(text))
         if setting is None:
@@ -55,12 +57,18 @@ def create_literal_block(
             "",
             "",
             *inlines,
-            classes=[CSS_CLASS],
+            classes=[CSS_CLASS, REQUIRED_CSS_CLASS]
+            if setting.required
+            else [CSS_CLASS],
             ids=[setting.anchor],
             refid=setting.anchor,
         )
     highlight = nodes.container("", block, classes=["highlight"])
     return nodes.container("", highlight, classes=[f"highlight-{fmt}", "notranslate"])
+
+
+_COMMENT_PREFIXES = {"toml": "#", "yaml": "#"}
+"""Line comment syntax of the formats that have one, to mark required keys in LaTeX."""
 
 
 class _example_block(nodes.literal_block):  # ruff: ignore[invalid-class-name]
@@ -76,8 +84,12 @@ def _visit_example_block_latex(self: LaTeXTranslator, node: _example_block) -> N
     The LaTeX writer renders a parsed literal as plain ``sphinxalltt``, which has no
     frame, caption, or highlighting. Sphinx defines the ``\PYG`` macros used here for
     its own code blocks.
+
+    Output without CSS cannot show the marker of required keys, so the line of a
+    required key ends in a ``# required`` comment instead, in formats that have
+    comments.
     """
-    body = "".join(_latex_tokens(self, node))
+    body = "".join(_mark_required(_latex_tokens(self, node), node))
     self.body.append(
         "\n"
         Rf"\begin{{sphinxVerbatim}}[commandchars=\\\{{\}}]"
@@ -88,15 +100,49 @@ def _visit_example_block_latex(self: LaTeXTranslator, node: _example_block) -> N
     raise nodes.SkipNode
 
 
-def _latex_tokens(self: LaTeXTranslator, node: nodes.Element) -> Iterator[str]:
+def _mark_required(
+    tokens: Iterator[tuple[str, bool]], node: nodes.Element
+) -> Iterator[str]:
+    r"""End the line of each required key in a comment, if the format has comments.
+
+    >>> node = _example_block("", "")
+    >>> node["comment"] = "#"
+    >>> tokens = [("key", True), (" = 1\nother", False), (" = 2", True)]
+    >>> print("".join(_mark_required(iter(tokens), node)))
+    key = 1\PYG{c+c1}{  \PYGZsh{} required}
+    other = 2\PYG{c+c1}{  \PYGZsh{} required}
+    """
+    prefix = node.get("comment")
+    comment = _latex_token(f"  {prefix} required", ["c1"]) if prefix else ""
+    pending = False
+    for text, required in tokens:
+        if pending and "\n" in text:
+            head, tail = text.split("\n", 1)
+            yield f"{head}{comment}\n{tail}"
+            pending = False
+        else:
+            yield text
+        pending = pending or (required and bool(comment))
+    if pending:
+        yield comment
+
+
+def _latex_tokens(
+    self: LaTeXTranslator, node: nodes.Element
+) -> Iterator[tuple[str, bool]]:
+    """Yield the LaTeX of each top-level token and whether it is a required key."""
     for child in node.children:
         if isinstance(child, nodes.reference):
             refid = f"{self.curfilestack[-1]}:{child['refid']}"
             label = "".join(self.hypertarget(i) for i in child["ids"])
-            inner = "".join(_latex_tokens(self, child))
-            yield Rf"{label}{self.hyperlink(refid)}\sphinxsamedocref{{{inner}}}}}}}"
+            inner = "".join(text for text, _ in _latex_tokens(self, child))
+            required = REQUIRED_CSS_CLASS in child["classes"]
+            yield (
+                Rf"{label}{self.hyperlink(refid)}\sphinxsamedocref{{{inner}}}}}}}",
+                required,
+            )
         elif isinstance(child, nodes.inline):
-            yield _latex_token(child.astext(), child["classes"])
+            yield _latex_token(child.astext(), child["classes"]), False
 
 
 def _latex_token(text: str, classes: list[str]) -> str:

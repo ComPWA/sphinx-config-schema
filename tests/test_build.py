@@ -158,6 +158,23 @@ def describe_config_schema_directive():
             "Settings without a default or example: missing" in app.warning.getvalue()
         )
 
+    def it_marks_required_keys(tmp_path: Path):
+        schema = {**SCHEMA, "required": ["output"]}
+        app = _build(tmp_path, ".. config-schema:: example.schema.json", schema=schema)
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        required = soup.select("a.config-schema-key.config-schema-required")
+        assert [a["id"] for a in required] == ["output-toml"]
+        assert required[0].get_text() == "output"
+        css = (app.outdir / "_static" / "config-schema.css").read_text()
+        assert ".config-schema-required::after" in css
+        (tips_file,) = (app.outdir / "_static" / "tippy").glob("index.*.js")
+        tips = tips_file.read_text()
+        assert (
+            R'"a[href=\"#output-toml\"]": "<p><span class=\"config-schema-badge\">required</span> Output <code>directory</code>.</p>'
+            in tips
+        )
+        assert tips.count("config-schema-badge") == 1
+
     @pytest.mark.parametrize(
         ("fmt", "expected"),
         [("toml", "env = {}"), ("yaml", "env: {}"), ("json", '"env": {}')],
@@ -337,6 +354,25 @@ def describe_config_schema_directive():
                 r"{\hyperref[\detokenize{index:tool.example.server.port-toml}]"
                 r"{\sphinxsamedocref{\PYG{n}{port}}}}"
             ) in tex
+
+        @pytest.mark.parametrize("fmt", ["toml", "yaml", "json"])
+        def it_comments_required_keys_in_latex(tmp_path: Path, fmt: str):
+            app = _build(
+                tmp_path,
+                f".. config-schema:: example.schema.json\n   :format: {fmt}\n",
+                schema={**SCHEMA, "required": ["output"]},
+                builder="latex",
+            )
+            assert not app.warning.getvalue()
+            tex = (app.outdir / "projectnamenotset.tex").read_text()
+            comment = R"\PYG{c+c1}{  \PYGZsh{} required}"
+            lines = [line for line in tex.splitlines() if comment in line]
+            if fmt == "json":
+                assert not lines
+            else:
+                (line,) = lines
+                assert R"{output}" in line
+                assert line.endswith(comment)
 
 
 def describe_references():

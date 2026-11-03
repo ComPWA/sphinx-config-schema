@@ -10,3 +10,20 @@
 .tippy-content > :last-child {
   margin-bottom: 0;
 }
+
+.config-schema-required::after {
+  content: "*";
+  color: var(--pst-color-danger, #c33);
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+.config-schema-badge {
+  border: 1px solid var(--pst-color-danger, #c33);
+  border-radius: 0.25rem;
+  color: var(--pst-color-danger, #c33);
+  font-size: 0.75em;
+  padding: 0 0.3em;
+  vertical-align: 0.1em;
+}
