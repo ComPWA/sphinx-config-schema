@@ -354,7 +354,171 @@ def describe_references():
         assert links == {
             "output": "#tool.example.output-toml",
             "Server": "#tool.example.server-toml",
-            "port": "#tool.example.server.port-json",
+            "server.port": "#tool.example.server.port-json",
         }
         assert soup.select_one('p a[href="#tool.example.output-toml"] code')
         assert soup.select_one('p a[href="#tool.example.server-toml"] code')
+
+    def it_resolves_suffix_and_shortened_targets(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.output`
+                :cfg:`.example.server.port`
+                :cfg:`~.port`
+                :config-schema:option:`~settings.tool.example.server.port`
+                :cfg:`.missing`
+
+                .. config-schema:: example.schema.json
+                   :name: settings
+                   :table: tool.example
+            """),
+        )
+        warnings = app.warning.getvalue()
+        assert ".missing" in warnings
+        assert "more than one" not in warnings
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        links = [
+            (a.get_text(), a["href"]) for a in soup.select("p a.reference.internal")
+        ]
+        assert links == [
+            ("output", "#settings.tool.example.output"),
+            ("server.port", "#settings.tool.example.server.port"),
+            ("port", "#settings.tool.example.server.port"),
+            ("port", "#settings.tool.example.server.port"),
+        ]
+        assert all(soup.select('p a[href^="#settings"] code'))
+
+    def it_prefers_suffix_matches_in_the_current_document(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.output`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+                   :format: json
+
+                .. toctree::
+
+                   other
+            """),
+            documents={
+                "other.rst": dedent("""
+                    Other
+                    =====
+
+                    :cfg:`.server.port`
+
+                    .. config-schema:: example.schema.json
+                       :name: other
+                       :table: tool.example
+                """),
+            },
+        )
+        warnings = app.warning.getvalue()
+        assert "more than one option found for '.output'" in warnings
+        assert "'.server.port'" not in warnings
+        other = BeautifulSoup((app.outdir / "other.html").read_text(), "html.parser")
+        link = other.select_one("p a.reference.internal")
+        assert link is not None
+        assert link["href"] == "#other.tool.example.server.port"
+
+    def it_prefers_suffix_matches_without_extra_keys(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`.server.port`
+                :cfg:`.tool.example.server.port`
+                :cfg:`.port`
+
+                .. config-schema:: example.schema.json
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+            """),
+        )
+        warnings = app.warning.getvalue()
+        assert "more than one option found for '.port'" in warnings
+        assert "'.server.port'" not in warnings
+        assert "'.tool.example.server.port'" not in warnings
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        targets = [a["href"] for a in soup.select("p a.reference.internal")]
+        assert targets[:2] == [
+            "#server.port-toml",
+            "#tool.example.server.port-toml",
+        ]
+
+    def it_registers_a_short_role_alias(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`settings.tool.example.output`
+                :cfg:`Port <settings.tool.example.server.port>`
+                :cfg:`settings.tool.example.missing`
+
+                .. config-schema:: example.schema.json
+                   :name: settings
+                   :table: tool.example
+            """),
+        )
+        assert (
+            "config-schema:option reference target not found" in app.warning.getvalue()
+        )
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        links = {a.get_text(): a["href"] for a in soup.select("p a.reference.internal")}
+        assert links == {
+            "output": "#settings.tool.example.output",
+            "Port": "#settings.tool.example.server.port",
+        }
+        assert soup.select_one('p a[href="#settings.tool.example.output"] code')
+
+    def it_normalizes_keys_in_exact_targets(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`settings.log_level`
+                :cfg:`settings.log-level`
+                :cfg:`index:log_level-toml`
+
+                .. config-schema:: example.schema.json
+                   :name: settings
+
+                .. config-schema:: example.schema.json
+            """),
+            schema={"properties": {"log_level": {"default": "info"}}},
+        )
+        assert "target not found" not in app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        links = [
+            (a.get_text(), a["href"]) for a in soup.select("p a.reference.internal")
+        ]
+        assert links == [
+            ("log_level", "#settings.log-level"),
+            ("log_level", "#settings.log-level"),
+            ("log_level", "#log-level-toml"),
+        ]
+
+    def it_strips_dots_and_tildes_from_unlinked_titles(tmp_path: Path):
+        app = _build(
+            tmp_path,
+            directive=dedent("""
+                :cfg:`!.output` :cfg:`!~.server.port` :cfg:`.nope`
+
+                .. config-schema:: example.schema.json
+                   :table: tool.example
+            """),
+        )
+        assert "target not found: .nope" in app.warning.getvalue()
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        paragraph = soup.select_one("p")
+        assert paragraph is not None
+        assert not paragraph.select("a")
+        assert [c.get_text() for c in paragraph.select("code")] == [
+            "output",
+            "port",
+            "nope",
+        ]

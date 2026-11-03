@@ -20,9 +20,10 @@ This is useful for tools that read their configuration from a file, such as a `[
 pip install sphinx-config-schema
 ```
 
-Then add the extension to your `conf.py`. It loads `sphinx_tippy` automatically:
+Then add the extension to the [`extensions`](https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-extensions) list in your [`conf.py`](https://www.sphinx-doc.org/en/master/usage/configuration.html). It loads `sphinx_tippy` automatically:
 
-```python
+```{code-block} python
+:caption: conf.py
 extensions = [
     "sphinx_config_schema",
 ]
@@ -109,12 +110,16 @@ The schema controls how the configuration is rendered:
 
 ### Referencing options
 
-Use the {rst:role}`config-schema:option` role to link to an option. It renders the key as inline code and, without an explicit title, uses the key itself as the title. Unnamed examples use labels qualified by the document name and the format:
+Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
+
+:::::::{tab-set}
+
+::::::{tab-item} MyST
+:sync: myst
 
 :::::{tab-set}
 
-::::{tab-item} MyST
-:sync: myst
+::::{tab-item} Option
 
 ```md
 {config-schema:option}`index:tool.example.output-toml`
@@ -122,8 +127,32 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 ::::
 
-::::{tab-item} reST
+::::{tab-item} cfg
+
+```md
+{cfg}`index:tool.example.output-toml`
+```
+
+::::
+
+::::{tab-item} ref
+
+```md
+{ref}`the output option <index:tool.example.output-toml>`
+```
+
+::::
+
+:::::
+
+::::::
+
+::::::{tab-item} reST
 :sync: rst
+
+:::::{tab-set}
+
+::::{tab-item} Option
 
 ```rst
 :config-schema:option:`index:tool.example.output-toml`
@@ -131,9 +160,29 @@ Use the {rst:role}`config-schema:option` role to link to an option. It renders t
 
 ::::
 
+::::{tab-item} cfg
+
+```rst
+:cfg:`index:tool.example.output-toml`
+```
+
+::::
+
+::::{tab-item} ref
+
+```rst
+:ref:`the output option <index:tool.example.output-toml>`
+```
+
+::::
+
 :::::
 
-The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above. The standard {rst:role}`ref` role accepts the same labels, but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`, written as ``{ref}`the output option <index:tool.example.output-toml>` ``.
+::::::
+
+:::::::
+
+The full {rst:dir}`table <config-schema:table>` path remains part of each label, with dots separating the levels of the hierarchy and a hyphen before the format. Repeated examples with the same format on one page receive numeric suffixes, such as `index:output-yaml-2`. These references resolve to {config-schema:option}`index:tool.example.output-toml` in the TOML tab and {config-schema:option}`index:output-json` in the JSON tab above.
 
 Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace instead. The YAML tab above does this with `:name: settings`, so its {config-schema:option}`settings.output` option is referenced with:
 
@@ -158,6 +207,10 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 ::::
 
 :::::
+
+As in Sphinx's Python domain, a [leading `.`](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects) matches every label whose key path ends with the target, and [`~`](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax) shortens the title to the last key. For instance, `` {cfg}`.tool.example.server.host` `` renders as {cfg}`.tool.example.server.host` and `` {cfg}`~.tool.example.server.host` `` as {cfg}`~.tool.example.server.host`, where `tool.example` selects the TOML tab over the YAML and JSON tabs.
+
+When a suffix matches several labels, those on the current page take precedence, followed by those whose complete key path equals the target. If several candidates remain, Sphinx warns and lists them. Targets without a leading dot are exact labels. In both cases, keys can be spelled as in the schema, such as `log_level`, or as in the label, such as `log-level`.
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
@@ -206,7 +259,11 @@ Dotted path of the table under which the settings appear, such as `tool.example`
 ````
 
 ```{rst:role} config-schema:option
-Link to a key of a {rst:dir}`config-schema` example by its label, rendered as inline code. Without an explicit title, the key itself is the title.
+Link to a key of a {rst:dir}`config-schema` example as inline code. See [Referencing options](#referencing-options) for label syntax and title formatting.
+```
+
+```{rst:role} cfg
+Short alias of {rst:role}`config-schema:option`.
 ```
 
 ```{toctree}
