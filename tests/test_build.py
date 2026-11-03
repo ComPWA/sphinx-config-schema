@@ -622,7 +622,7 @@ def describe_references():
             "server",
         ]
 
-    def it_anchors_tables_without_settings_in_their_first_subtable(tmp_path: Path):
+    def it_anchors_tables_without_settings_in_the_first_nested_header(tmp_path: Path):
         server = {"properties": {"port": {"default": 8080}}}
         proxy = {"properties": {"host": {"default": "proxy.org"}}}
         schema = {"properties": {"server": server, "proxy": proxy}}
