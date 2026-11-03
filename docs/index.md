@@ -31,7 +31,7 @@ extensions = [
 
 ## Usage
 
-The {rst:dir}`config-schema` directive takes the path to a JSON schema file, relative to the current document or, with a leading `/`, to the documentation source directory. The optional {rst:dir}`table <config-schema:table>` option sets the dotted path of the table under which the settings appear, {rst:dir}`caption <config-schema:caption>` adds a caption to the code block, and {rst:dir}`format <config-schema:format>` selects the output format:
+The {rst:dir}`config-schema` directive takes the path to a JSON schema file, relative to the current document or, with a leading `/`, to the documentation source directory. The optional {rst:dir}`table <config-schema:table>` option sets the dotted path of the table under which the settings appear, {rst:dir}`caption <config-schema:caption>` adds a caption to the code block, {rst:dir}`format <config-schema:format>` selects the output format, and {rst:dir}`header-titles <config-schema:header-titles>` titles [references](#referencing-options) to TOML tables with their header:
 
 :::::{tab-set}
 
@@ -43,6 +43,7 @@ The {rst:dir}`config-schema` directive takes the path to a JSON schema file, rel
 :caption: pyproject.toml
 :table: tool.example
 :format: toml
+:header-titles:
 ```
 ````
 
@@ -56,6 +57,7 @@ The {rst:dir}`config-schema` directive takes the path to a JSON schema file, rel
     :caption: pyproject.toml
     :table: tool.example
     :format: toml
+    :header-titles:
 ```
 
 ::::
@@ -115,7 +117,7 @@ The schema controls how the configuration is rendered:
 
 ### Referencing options
 
-Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. A reference to the table itself shows its full path, even if the table has no settings of its own and only appears in the headers of its subtables. With the {rst:dir}`header-titles <config-schema:header-titles>` flag, references to the tables of a TOML example show their header instead, such as {cfg}`.tool.example` for the TOML tab above. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
+Use the {rst:role}`config-schema:option` role or its short alias {rst:role}`cfg` to link to an option. Both render the key as inline code and, without an explicit title, use the key path below the {rst:dir}`table <config-schema:table>` as the title, such as {config-schema:option}`index:tool.example.server.host-toml`. The standard [`ref`](https://www.sphinx-doc.org/en/master/usage/referencing.html#role-ref) role accepts the same labels but needs an explicit title and renders it as plain text, as in {ref}`the output option <index:tool.example.output-toml>`. Unnamed examples use labels qualified by the document name and the format:
 
 :::::::{tab-set}
 
@@ -216,6 +218,8 @@ Set {rst:dir}`name <config-schema:name>` to give an example a stable namespace i
 As in Sphinx's Python domain, a [leading `.`](https://www.sphinx-doc.org/en/master/usage/domains/python.html#cross-referencing-python-objects) matches every label whose key path ends with the target, and [`~`](https://www.sphinx-doc.org/en/master/usage/referencing.html#syntax) shortens the title to the last key. For instance, `` {cfg}`.tool.example.server.host` `` renders as {cfg}`.tool.example.server.host` and `` {cfg}`~.tool.example.server.host` `` as {cfg}`~.tool.example.server.host`, where `tool.example` selects the TOML tab over the YAML and JSON tabs.
 
 When a suffix matches several labels, those on the current page take precedence, followed by those whose complete key path equals the target. If several candidates remain, Sphinx warns and lists them. Targets without a leading dot are exact labels. In both cases, keys can be spelled as in the schema, such as `log_level`, or as in the label, such as `log-level`.
+
+A reference to the table of an example shows its full path, such as `tool.example`, also when that table has no settings of its own and only appears in the headers of its subtables. With {rst:dir}`header-titles <config-schema:header-titles>`, the tables of a TOML example are titled with their header instead, as in {cfg}`.tool.example` for the TOML tab above.
 
 When the [PyData Sphinx Theme](https://pydata-sphinx-theme.readthedocs.io) or a theme derived from it is used, the tooltips take its colors and follow light and dark mode.
 
