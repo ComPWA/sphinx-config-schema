@@ -123,7 +123,7 @@ class ConfigSchemaDirective(SphinxDirective):
             key["names"].append(label)
             self.state.document.note_explicit_target(key)
             entry = entries[anchor]
-            title = ".".join(entry.path[table_depth:]) or entry.name
+            title = ".".join(entry.path[table_depth:] or entry.path)
             path = _make_anchor("", entry.path, "")
             domain.options[label] = (self.env.docname, anchor, title, path)
 
