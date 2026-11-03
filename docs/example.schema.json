@@ -63,7 +63,8 @@
             { "X-Frame-Options": "DENY" }
           ]
         }
-      }
+      },
+      "required": ["host"]
     }
   }
 }

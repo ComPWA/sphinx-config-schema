@@ -10,3 +10,11 @@
 .tippy-content > :last-child {
   margin-bottom: 0;
 }
+
+.config-schema-required::after {
+  content: "*";
+  color: var(--pst-color-danger, #c33);
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+}

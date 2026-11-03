@@ -108,6 +108,8 @@ The schema controls how the configuration is rendered:
 
 - Each key has a tooltip containing its `description`, its actual default, allowed enum values, and any examples other than the value shown. Double backticks in descriptions render as inline code. The tooltip of the last component of the {rst:dir}`table <config-schema:table>` path shows the schema's top-level `description`.
 
+- Keys listed under `required` are marked with an asterisk, such as {cfg}`.tool.example.server.host`. The marker is not part of the copied text and can be restyled through the `config-schema-required` CSS class.
+
 - Each key links to itself and can be [referenced](#referencing-options).
 
 ### Referencing options

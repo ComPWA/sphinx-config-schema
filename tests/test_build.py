@@ -158,6 +158,16 @@ def describe_config_schema_directive():
             "Settings without a default or example: missing" in app.warning.getvalue()
         )
 
+    def it_marks_required_keys(tmp_path: Path):
+        schema = {**SCHEMA, "required": ["output"]}
+        app = _build(tmp_path, ".. config-schema:: example.schema.json", schema=schema)
+        soup = BeautifulSoup((app.outdir / "index.html").read_text(), "html.parser")
+        required = soup.select("a.config-schema-key.config-schema-required")
+        assert [a["id"] for a in required] == ["output-toml"]
+        assert required[0].get_text() == "output"
+        css = (app.outdir / "_static" / "config-schema.css").read_text()
+        assert ".config-schema-required::after" in css
+
     @pytest.mark.parametrize(
         ("fmt", "expected"),
         [("toml", "env = {}"), ("yaml", "env: {}"), ("json", '"env": {}')],

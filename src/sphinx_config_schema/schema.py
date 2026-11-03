@@ -45,6 +45,8 @@ class Setting:
     A ``"placeholder"`` is the empty mapping shown for a free-form table, an object with
     ``additionalProperties`` but neither ``properties`` nor a value to show.
     """
+    required: bool = field(default=False, repr=False)
+    """Whether the enclosing object lists the key under ``required``."""
     _anchor_prefix: str = field(default="", repr=False)
     _anchor_suffix: str = field(default="", repr=False)
 
@@ -69,6 +71,8 @@ class Table:
     """Unquoted key of the table within its parent."""
     description: str
     """Description from the schema for the tooltip, as in `.Setting.description`."""
+    required: bool = field(default=False, repr=False)
+    """Whether the enclosing object lists the table under ``required``."""
     _anchor_prefix: str = field(default="", repr=False)
     _anchor_suffix: str = field(default="", repr=False)
 
@@ -128,16 +132,15 @@ def iter_settings(
     missing: list[str] = []
     if table:
         yield Table(table[:-1], table[-1], schema.get("description", ""))
-    for sub_table, properties in _iter_tables(
-        table, schema.get("properties", {}), schema
-    ):
-        for name, field_schema in properties.items():
+    for sub_table, obj in _iter_tables(table, schema, schema):
+        required = set(obj.get("required", ()))
+        for name, field_schema in obj.get("properties", {}).items():
             resolved = _resolve_ref(field_schema, schema)
             if _is_table(resolved):
                 description = field_schema.get("description") or resolved.get(
                     "description", ""
                 )
-                yield Table(sub_table, name, description)
+                yield Table(sub_table, name, description, required=name in required)
                 continue
             allowed = _enum_values(field_schema, schema)
             effective_schema = {**resolved, **field_schema}
@@ -166,6 +169,7 @@ def iter_settings(
                 allowed=allowed,
                 default=default,
                 value_source=value_source,
+                required=name in required,
             )
     if strict and missing:
         msg = f"Settings without a default or example: {', '.join(missing)}"
@@ -227,13 +231,14 @@ def _example_value(field_schema: dict[str, Any]) -> Any:
 
 
 def _iter_tables(
-    table: tuple[str, ...], properties: dict[str, Any], schema: dict[str, Any]
+    table: tuple[str, ...], obj: dict[str, Any], schema: dict[str, Any]
 ) -> Iterator[tuple[tuple[str, ...], dict[str, Any]]]:
-    yield table, properties
-    for name, field_schema in properties.items():
+    """Yield the path and schema of an object and of every object nested in it."""
+    yield table, obj
+    for name, field_schema in obj.get("properties", {}).items():
         resolved = _resolve_ref(field_schema, schema)
         if _is_table(resolved):
-            yield from _iter_tables((*table, name), resolved["properties"], schema)
+            yield from _iter_tables((*table, name), resolved, schema)
 
 
 def _is_table(field_schema: dict[str, Any]) -> bool:

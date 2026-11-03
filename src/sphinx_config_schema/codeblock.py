@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from sphinx_config_schema.schema import Entry
 
 CSS_CLASS = "config-schema-key"
+REQUIRED_CSS_CLASS = "config-schema-required"
 
 
 def create_literal_block(
@@ -55,7 +56,9 @@ def create_literal_block(
             "",
             "",
             *inlines,
-            classes=[CSS_CLASS],
+            classes=[CSS_CLASS, REQUIRED_CSS_CLASS]
+            if setting.required
+            else [CSS_CLASS],
             ids=[setting.anchor],
             refid=setting.anchor,
         )
