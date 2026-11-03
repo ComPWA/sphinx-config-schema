@@ -52,13 +52,18 @@ def _entry_tooltip(entry: Entry) -> str:
     ... )
     '<p>Other examples: <code>8080</code></p>'
     >>> _entry_tooltip(Setting((), "host", "a", "Host.", required=True))
-    '<p>Host.</p><p>Required</p>'
+    '<p><span class="config-schema-badge">required</span> Host.</p>'
     >>> _entry_tooltip(Table((), "format", ""))
     ''
     """
     tooltip = to_tooltip(entry.description) if entry.description else ""
     if entry.required:
-        tooltip += "<p>Required</p>"
+        badge = '<span class="config-schema-badge">required</span>'
+        tooltip = (
+            f"<p>{badge} {tooltip.removeprefix('<p>')}"
+            if tooltip
+            else f"<p>{badge}</p>"
+        )
     if isinstance(entry, Table):
         return tooltip
     if entry.default is not NO_DEFAULT:
