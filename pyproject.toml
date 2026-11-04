@@ -39,6 +39,7 @@ content-type = "text/markdown"
 [project.urls]
 Changelog = "https://github.com/ComPWA/sphinx-config-schema/releases"
 Documentation = "https://compwa.github.io/sphinx-config-schema"
+Homepage = "https://compwa.github.io/sphinx-config-schema"
 Issues = "https://github.com/ComPWA/sphinx-config-schema/issues"
 Source = "https://github.com/ComPWA/sphinx-config-schema"
 
