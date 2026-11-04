@@ -23,16 +23,18 @@ _INTERPRETED_PATTERN = re.compile(
     r"(?::[\w.+-]+(?::[\w.+-]+)?:)?(?<!`)`(?P<text>[^`]+)`(?!`)"
 )
 _TITLE_PATTERN = re.compile(r"^(?P<title>.+?)\s*&lt;[^&]+&gt;$")
+_PARAGRAPH_SEPARATOR = re.compile(r"\n\s*\n")
 
 
 def to_tooltip(description: str) -> str:
-    """Convert a schema description to the HTML shown in its tooltip.
+    r"""Convert a schema description to the HTML shown in its tooltip.
 
     Inline literals become code, and so does interpreted text in single backticks.
     Projects that document Python usually render the latter as cross-references, which
     Sphinx shows as code, and Markdown renderers of the schema show it as code as well.
     A role prefix is dropped, and so are the ``~`` and ``!`` modifiers of a reference. A
-    reference with an explicit title shows only the title.
+    reference with an explicit title shows only the title. Paragraphs separated by a
+    blank line become separate paragraphs.
 
     >>> to_tooltip("Arguments for ``pytest``, such as ``-n auto``.")
     '<p>Arguments for <code>pytest</code>, such as <code>-n auto</code>.</p>'
@@ -40,11 +42,14 @@ def to_tooltip(description: str) -> str:
     '<p>Requires <code>host</code>.</p>'
     >>> to_tooltip("Run :program:`pwa` with :py:obj:`~module.Settings`.")
     '<p>Run <code>pwa</code> with <code>Settings</code>.</p>'
+    >>> to_tooltip("First.\n\nSecond.")
+    '<p>First.</p><p>Second.</p>'
     """
     escaped = html.escape(description)
     body = _LITERAL_PATTERN.sub(r"<code>\g<text></code>", escaped)
     body = _INTERPRETED_PATTERN.sub(_interpreted_to_code, body)
-    return f"<p>{body}</p>"
+    paragraphs = _PARAGRAPH_SEPARATOR.split(body.strip())
+    return "".join(f"<p>{paragraph}</p>" for paragraph in paragraphs)
 
 
 def _interpreted_to_code(match: re.Match[str]) -> str:

@@ -21,7 +21,7 @@
       "default": "warning"
     },
     "color": {
-      "description": "When to use color in terminal output.",
+      "description": "When to use color in terminal output.\n\nWith ``null``, the tool uses color only if the output is a terminal.",
       "anyOf": [
         { "type": "null" },
         { "type": "string", "enum": ["auto", "always", "never"] }

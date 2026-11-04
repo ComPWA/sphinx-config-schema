@@ -44,3 +44,8 @@ def describe_to_tooltip():
     def it_leaves_unpaired_backticks():
         assert to_tooltip("A ``b") == "<p>A ``b</p>"
         assert to_tooltip("A `b") == "<p>A `b</p>"
+
+    def it_splits_paragraphs_at_blank_lines():
+        assert to_tooltip("First\nline.\n\n  \nSecond `x`.\n") == (
+            "<p>First\nline.</p><p>Second <code>x</code>.</p>"
+        )
