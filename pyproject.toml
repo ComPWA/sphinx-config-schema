@@ -51,7 +51,7 @@ dev = [
     { include-group = "test" },
 ]
 doc = [
-    "myst-parser",
+    "myst-parser>=5.1",
     "pydata-sphinx-theme",
     "sphinx-api-relink",
     "sphinx-codeautolink",
