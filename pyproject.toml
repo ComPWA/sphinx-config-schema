@@ -83,7 +83,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.compwa.policy]
-doc-apt-packages = "latexmk texlive-latex-extra"
+doc-apt-packages = "latexmk tex-gyre texlive-fonts-recommended texlive-latex-extra"
 repo-name = "sphinx-config-schema"
 repo-title = "sphinx-config-schema"
 
