@@ -111,19 +111,21 @@ format-python-code-blocks = false
 
 [tool.lychee]
 cache = true
+cache_exclude_status = "400.."
+# [:] keeps Lychee from extracting regex patterns as URLs.
 exclude = [
     "%7B(?:ORGANIZATION|REPO_NAME)%7D",  # These links in conf.py are only complete when the code runs
 ]
 extensions = ["json", "md", "py", "toml", "yaml", "yml"]
+hidden = true  # Include the workflows under .github/
 include_fragments = "anchor-only"
 include_verbatim = true
-max_cache_age = "2d"
-max_retries = 3
+max_cache_age = "7d"
 remap = [
-    '^git\+(https://[^@]+)(@.*)?$ $1',  # Check the repository behind pip-style VCS requirements
+    '^git\+(https[:]//[^@]+)(@.*)?$ $1',  # Check the repository behind pip-style VCS requirements
+    '^(https[:]//github\.com/ComPWA/sphinx-config-schema/compare)/\$PREVIOUS_TAG.*$ $1',  # Release Drafter supplies the tags at runtime
+    '^https[:]//pypi\.org/p/\$$ https://pypi.org/project/sphinx-config-schema/',  # The workflow supplies the package name at runtime
 ]
-retry_wait_time = 5
-timeout = 30
 
 [tool.poe.executor]
 isolated = true
