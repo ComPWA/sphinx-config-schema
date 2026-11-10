@@ -40,6 +40,11 @@ autodoc_typehints_format = "short"
 codeautolink_concat_default = True
 codeautolink_global_preface = f"from {PACKAGE_NAME} import *"
 default_role = "py:obj"
+exclude_patterns = [
+    "**AGENTS.md",
+    "**CLAUDE.md",
+    "**GEMINI.md",
+]
 extensions = [
     "myst_parser",
     "sphinx_api_relink",
