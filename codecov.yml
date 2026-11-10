@@ -1,6 +1,4 @@
 comment: false
 coverage:
   status:
-    project:
-      default: {}
     patch: false
