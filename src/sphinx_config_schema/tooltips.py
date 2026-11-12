@@ -120,7 +120,7 @@ def _get_tips(env: BuildEnvironment) -> dict[str, dict[str, str]]:
     """Get the tooltips per document, which are stored in the build environment."""
     if not hasattr(env, "config_schema_tips"):
         env.config_schema_tips = {}  # ty: ignore[invalid-assignment]
-    return env.config_schema_tips  # ty: ignore[unresolved-attribute]
+    return env.config_schema_tips  # ty: ignore[missing-attribute]
 
 
 def _purge_tips(_app: Sphinx, env: BuildEnvironment, docname: str) -> None:
@@ -144,4 +144,4 @@ def _register_tips(
     """Feed the tooltips to sphinx-tippy before it collects the tips of a page."""
     tips = _get_tips(app.env).get(pagename)
     if tips:
-        app.env.tippy_config.custom_tips.update(tips)  # ty: ignore[unresolved-attribute]
+        app.env.tippy_config.custom_tips.update(tips)  # ty: ignore[missing-attribute]

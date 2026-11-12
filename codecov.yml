@@ -1,8 +1,7 @@
 comment: false
 coverage:
+  range: "70...100"
   status:
-    project:
+    patch:
       default:
-        target: auto
-        threshold: 0.5%
-    patch: false
+        informational: true

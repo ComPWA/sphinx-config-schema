@@ -40,6 +40,11 @@ autodoc_typehints_format = "short"
 codeautolink_concat_default = True
 codeautolink_global_preface = f"from {PACKAGE_NAME} import *"
 default_role = "py:obj"
+exclude_patterns = [
+    "**AGENTS.md",
+    "**CLAUDE.md",
+    "**GEMINI.md",
+]
 extensions = [
     "myst_parser",
     "sphinx_api_relink",
@@ -105,7 +110,9 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
 }
+myst_colon_fence_exact_match = True
 myst_enable_extensions = [
+    "alert",
     "colon_fence",
     "substitution",
 ]

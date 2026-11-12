@@ -1,7 +1,4 @@
 __pycache__/
-.agents/
-.claude/
-.codex/
 .coverage
 .coverage.*
 .eggs/
@@ -14,8 +11,6 @@ __pycache__/
 **.code-workspace
 *build/
 *venv/
-AGENTS.md
-CLAUDE.md
 coverage.xml
 dist/
 htmlcov/
@@ -23,3 +18,12 @@ prof/
 pyvenv*/
 uv.lock
 version.py
+
+# Agent tooling
+.agents/
+.claude/
+.codex/
+.gemini/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
